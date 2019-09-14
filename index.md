@@ -7,10 +7,10 @@ Carleton University, Ottawa, Canada
 ---
 
 ### Project Outline
-* [at most 1/2 page outline of what you intend to do]  
+* at most 1/2 page outline of what you intend to do
 
 ### Startup Paper(s)
-* [list your startup paper(s) and include a link to the PDF file]
+* list your startup paper(s) and include a link to the PDF file
 
 ### Deliverables
 * Literature Review (PDF file created from LATEX template)  
