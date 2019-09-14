@@ -1,4 +1,4 @@
-## Project Title: TBD
+## Project Title: Data Anonymization Using MapReduce
 ## Name: Macarious Abadeer
 ## Email: macariousabadeer@cmail.carleton.ca
 School of Computer Science  
