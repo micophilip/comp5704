@@ -10,7 +10,8 @@ Carleton University, Ottawa, Canada
 * at most 1/2 page outline of what you intend to do
 
 ### Startup Paper(s)
-* list your startup paper(s) and include a link to the PDF file
+* [Efficient Recommendation of De-Identification Policies Using MapReduce](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7891944)
+* [A top-down k-anonymization implementation for apache spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
 
 ### Deliverables
 * Literature Review (PDF file created from LATEX template)  
