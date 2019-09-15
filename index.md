@@ -7,7 +7,9 @@ Carleton University, Ottawa, Canada
 ---
 
 ### Project Outline
-Privacy-Preserving Data Publishing (PPDP) is an ongoing field of research that involves de-identification of data so that it can be shared for secondary use such as analytics and health care research while minimizing information loss. Balancing data utility and data privacy is a challenging problem and this  research project intends to analyze different anonymization parallel algorithms as well as test, implement and recommend enhancements using MapReduce on Spark clusters. There are multiple techniques and approaches to identification such as generalization and perturbation to name a few. This project also aims to analyze different de-identification policies and assess the performance impact of different policies.
+Privacy-Preserving Data Publishing (PPDP) is an ongoing field of research that involves de-identification of data so that it can be shared for secondary use such as analytics and health care research while minimizing information loss.  
+Balancing data utility and data privacy is a challenging problem and this  research project intends to analyze different anonymization parallel algorithms as well as test, implement and recommend enhancements using MapReduce on Spark clusters.  
+There are multiple techniques and approaches to identification such as generalization and perturbation to name a few. This project also aims to analyze different de-identification policies and assess the performance impact of different policies.
 
 ### Startup Paper(s)
 1. [Efficient Recommendation of De-Identification Policies Using MapReduce](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7891944)
