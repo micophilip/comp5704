@@ -25,6 +25,7 @@ There are multiple techniques and approaches to identification such as generaliz
 ### Relevant References
 1. [Clash of the titans: MapReduce vs. Spark for large scale data analytics](https://dl-acm-org.proxy.library.carleton.ca/citation.cfm?doid=2831360.2831365)
 1. [Efficient Recommendation of De-Identification Policies Using MapReduce](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7891944)
+1. [An Advanced Bottom up Generalization Approach for Big Data on Cloud](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.9611&rep=rep1&type=pdf)
 1. [Privacy-preserving big data analytics a comprehensive survey](https://www-sciencedirect-com.proxy.library.carleton.ca/science/article/pii/S0743731519300589)
 1. [Big Data Anonymization in Cloud using k-Anonymity Algorithm using Map Reduce Framework](http://ijsrcseit.com/paper/CSEIT19516.pdf)
 1. [Improving MapReduce privacy by implementing multi‐dimensional sensitivity‐based anonymization](https://journalofbigdata.springeropen.com/track/pdf/10.1186/s40537-017-0104-5)
