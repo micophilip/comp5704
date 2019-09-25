@@ -12,7 +12,6 @@ Balancing data utility and data privacy is a challenging problem and this  resea
 There are multiple techniques and approaches to identification such as generalization and perturbation to name a few. This project also aims to analyze different de-identification policies and assess the performance impact of different policies.
 
 ### Startup Paper(s)
-1. [Experimenting sensitivity-based anonymization framework in apache spark](https://journalofbigdata.springeropen.com/articles/10.1186/s40537-018-0149-0)
 1. [A top-down k-anonymization implementation for apache spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
 
 ### Deliverables
@@ -24,7 +23,9 @@ There are multiple techniques and approaches to identification such as generaliz
 
 ### Relevant References
 1. [Clash of the titans: MapReduce vs. Spark for large scale data analytics](https://dl-acm-org.proxy.library.carleton.ca/citation.cfm?doid=2831360.2831365)
+1. [Experimenting sensitivity-based anonymization framework in apache spark](https://journalofbigdata.springeropen.com/articles/10.1186/s40537-018-0149-0)
 1. [Efficient Recommendation of De-Identification Policies Using MapReduce](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7891944)
+1. [Enhance Privacy in Big Data and Cloud via Diff-Anonym Algorithm](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8123730)
 1. [An Advanced Bottom up Generalization Approach for Big Data on Cloud](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.9611&rep=rep1&type=pdf)
 1. [Privacy-preserving big data analytics a comprehensive survey](https://www-sciencedirect-com.proxy.library.carleton.ca/science/article/pii/S0743731519300589)
 1. [Big Data Anonymization in Cloud using k-Anonymity Algorithm using Map Reduce Framework](http://ijsrcseit.com/paper/CSEIT19516.pdf)
