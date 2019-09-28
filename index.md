@@ -1,4 +1,4 @@
-## Project Title: Parallel Anonymization Algorithms using Apache Spark™
+## Project Title: Parallel Anonymization using MapReduce on Apache Spark™
 ## Name: Macarious Abadeer
 ## Email: macariousabadeer@cmail.carleton.ca
 School of Computer Science  
@@ -23,6 +23,8 @@ There are multiple techniques and approaches to identification such as generaliz
 
 ### Relevant References
 1. [Clash of the titans: MapReduce vs. Spark for large scale data analytics](https://dl-acm-org.proxy.library.carleton.ca/citation.cfm?doid=2831360.2831365)
+1. [A Parallel Method for Scalable Anonymization of Transaction Data](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7165151)
+1. [Scalable, Efficient Anonymization with INCOGNITO - Framework & Algorithm](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8029307)
 1. [Experimenting sensitivity-based anonymization framework in apache spark](https://journalofbigdata.springeropen.com/articles/10.1186/s40537-018-0149-0)
 1. [Efficient Recommendation of De-Identification Policies Using MapReduce](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=7891944)
 1. [Enhance Privacy in Big Data and Cloud via Diff-Anonym Algorithm](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8123730)
