@@ -1,0 +1,110 @@
+% ===========================================================================
+% Title:
+% ---------------------------------------------------------------------------
+% to create Type I fonts type "dvips -P cmz -t letter <filename>"
+% ===========================================================================
+\documentclass[11pt]{article}       %--- LATEX 2e base
+\usepackage{latexsym}               %--- LATEX 2e base
+%---------------- Wide format -----------------------------------------------
+\textwidth=6in \textheight=9in \oddsidemargin=0.25in
+\evensidemargin=0.25in \topmargin=-0.5in
+%--------------- Def., Theorem, Proof, etc. ---------------------------------
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{property}{Property}
+\newtheorem{observation}{Observation}
+\newtheorem{fact}{Fact}
+\newenvironment{proof}           {\noindent{\bf Proof.} }%
+                                 {\null\hfill$\Box$\par\medskip}
+%--------------- Algorithm --------------------------------------------------
+\newtheorem{algX}{Algorithm}
+\newenvironment{algorithm}       {\begin{algX}\begin{em}}%
+                                 {\par\noindent --- End of Algorithm ---
+                                 \end{em}\end{algX}}
+\newcommand{\step}[2]            {\begin{list}{}
+                                  {  \setlength{\topsep}{0cm}
+                                     \setlength{\partopsep}{0cm}
+                                     \setlength{\leftmargin}{0.8cm}
+                                     \setlength{\labelwidth}{0.7cm}
+                                     \setlength{\labelsep}{0.1cm}    }
+                                  \item[#1]#2    \end{list}}
+                                 % usage: \begin{algorithm} \label{xyz}
+                                 %        ... \step{(1)}{...} ...
+                                 %        \end{algorithm}
+%--------------- Figures ----------------------------------------------------
+\usepackage{graphicx}
+
+\newcommand{\includeFig}[3]      {\begin{figure}[htb] \begin{center}
+                                 \includegraphics
+                                 [width=4in,keepaspectratio] %comment this line to disable scaling
+                                 {#2}\caption{\label{#1}#3} \end{center} \end{figure}}
+                                 % usage: \includeFig{label}{file}{caption}
+
+
+% ===========================================================================
+\begin{document}
+% ===========================================================================
+
+% ############################################################################
+% Title
+% ############################################################################
+
+\title{LITERATURE REVIEW: Parallel Anonymization using MapReduce on Apache Spark\texttrademark}
+
+
+% ############################################################################
+% Author(s) (no blank lines !)
+\author{
+% ############################################################################
+Macarious Abadeer\\
+School of Computer Science\\
+Carleton University\\
+Ottawa, Canada K1S 5B6\\
+{\em macariousabadeer@cmail.carleton.ca}
+% ############################################################################
+} % end-authors
+% ############################################################################
+
+\maketitle
+
+
+
+% ############################################################################
+\section{Introduction} \label{intro}
+% ############################################################################
+
+Since the introduction of multi-core processors in 2004 by Intel\textsuperscript{\textregistered}, parallel computing evolved to exploit the advantages of multiple processing units that became the norm for personal computers. This evolution was also expanded and accelerated by the advancements in Cloud Computing that supported running compute-intensive applications over a network of clusters. Parallel computing enabled the development of solutions to different real world applications that were hindered by scalability limitations such as big data analytics, machine learning and artificial intelligence. One of the problems that parallel computing provided scaleable solutions for is data anonymization - especially for big data. 
+
+In today's abundance of big data ranging from retail and banking transactions, health care, social media interactions and sensor data, a need was created for measures that protects people's most private and sensitive data. One of the most popular theories that were developed in this area was $k$-anonymity developed by Samarati and Sweeney in 1998 \cite{Samarati-P.:1998}. Sweeney argued that an individual in a dataset can be identified when it is linked with other public datasets even if the original dataset did not contain identifying information such as name, date of birth and social insurance number. He was able to show that when linking voter registration cards and health care data, individuals can be identified with 87\% accuracy. Those potentially identifying attributes are called Quasi-Identifiers (QID). $k$-anonymity states that a dataset is called $k$-anonymous when for a given record, there exists at least \($k$-1\) records in the same dataset with the same QID values.  Further modifications to $k$-anonymity were made to overcome its shortcomings such as introducing $\ell$-diversity \cite{Machanavajjhala:2007} and \textit{t}-closeness \cite{Li-N.:2007}. $\ell$-diversity ensures that sensitive attributes, such as diagnosis in a health care dataset, need to have diverse values so that an adversary who knows the values of a given QIDs cannot deduce their diagnosis. \textit{t}-closeness ensures that the distribution of these diverse values is close to their distribution in the original dataset.
+
+While these theories contributed immensely to the practices of data anonymization, $k$-anonymity remains NP-complete \cite{Sopaoglu:2007}. Further research used these models as a baseline in order to develop scalable parallel algorithms that can handle big data. In the next section I will go over the different ideas that were proposed to optimize and scale $k$-anonymity.
+
+
+% ############################################################################
+\section{Literature Review} \label{litrev}
+% ############################################################################
+
+There are three different masking types that are used in order to satisfy $k$-anonymity: interval, taxonomy tree and suppression \cite{Al-Zobbi-Mohammed:2018}. Suppression requires certain outlier tuples to be removed in order to satisfy $k$-anonymity \cite{Samarati-P.:1998}. Intervals are taxonomy trees are generalization techniques applied to numerical and categorical attributes respectively \cite{Samarati-P.:1998}. For example two records with birth year of 1971 and 1973 can be generalized to 1970-1975. For a taxonomy tree, a categorical attribute such as education level, a post-graduate node in a taxonomy tree can have PhD, Masters and Post Graduate Diploma as its child leaves so that records with these values can be generalized to the parent node. The majority of research papers on anonymization in the context of big data involved taxonomy trees thus this is where I focus my literature survey.
+
+One of the techniques that researchers attempted to optimize was Bottom-Up Generalization (BUG) which involves traversing the taxonomy tree of attribute hierarchies from the bottom (most specific) upwards (most general) \cite{Ke-Wang:2004}. Wang suggested that the taxonomy tree would be provided by the data supplier or the data recipient \cite{Ke-Wang:2004}. As the tree is traversed, two metrics are calculated to ensure a high quality generalization: information loss per anonymity gain. An indexed approach to bottom-up generalization was proposed by Hoang \cite{Hoang:2012} where the taxonomy tree was generated automatically at runtime. Hoang's indexed approach could also handle numerical as well as categorical attributes. Indexed BUG starts with collecting statistical information about the dataset as well as partition it to be used in the generalization step which was further broken down to four steps: calculate the best generalization score based on the minimum information loss, calculate $k$-anonymity for every partition, generate an indexed generalization map which maps every value to its generalized value, and the last step creates the anonymized dataset using this map. Hoang's experiments showed that the generalization time did not increase with the dataset size due to the use of indexed generalization map however performance was impacted by the distinct values count for each QID.
+
+Parallel BUG was introduced to address the limitations of traditional and indexed BUG approaches. Pandilakshmi attempted to solve the limitations of indexing structures since they are centralized and hard to parallelize or run on distributed systems such as the Cloud \cite{Pandilakshmi:2014}. Pandilakshmi introduced Bi-Level BUG algorithm where MapReduce framework was used to take advantage of job-level and task-level parallelization. Job-level parallelization was achieved by using multiple MapReduce jobs and task-level parallelization was achieved by using multiple map-reducer tasks for every MapReduce job so that they are executed in parallel on every partition. Data is partitioned according to a random number generated between 1 and $p$ where $p$ is the number of partitions. Pandilakshmi then runs MapReduce BUG driver (MRBUG) iteratively on the partitioned datasets and calculates generalization score (least information loss with the most anonymity gain) and stops until it finds the best generalization with the highest score that satisfies $k$-anonymity. Pandilakshmi experiments performed on varying datasets up to 4GB showed that execution time was virtually capped at ~33 minutes regardless of dataset size.
+
+Another technique was Top-Down Specialization (TDS). TDS traverses the taxonomy tree from the top downwards where it starts with the most generalized values and specializes the value and stops when it violates $k$-anonymity \cite{Fung:2005}. Multiple solutions have been developed such as a scalable two-phase TDS introduced by \cite{Priyanka:2014} and \cite{Zhang:2014}. The first phase involves partitioning the original dataset to $p$ partitions using random sampling. A MapReduce TDS job runs in parallel on each partition. Each job specializes the data iteratively while calculating information gain and privacy loss metrics and creates an intermediate anonymized dataset. In the second phase the intermediate datasets are merged and further anonymized if necessary to satisfy $k$-anonymity. In \cite{Zhang:2014}, Zhang et al. adopted Hadoop\textsuperscript{\textregistered} and took advantage of distributed cache capability to pass the intermediate anonymized dataset to each mapper/reducer node. The experiments for this solution showed the overheard in the partitioning phase of the dataset.
+
+A hybrid approach of BUG and TDS using MapReduce was introduced by \cite{Zhang:2013} where it was shown that when either TDS or BUG were used individually, they performed poorly for certain values of $k$. The hybrid approach applies TDS for large $k$ values and BUG for smaller ones. The notion of Workload Balancing Point is introduced which is defined as the point where the amount of computation required for TDS is the same as BUG. Once that point is identified, the hybrid approach chooses TDS for $k$ greater than the workload balancing point and chooses BUG when $k$ is smaller. The workload balancing point is estimated using the height of the taxonomy tree as a reference.
+
+A multi-dimensional sensitivity-based algorithm was developed by 
+
+
+% ############################################################################
+% Bibliography
+% ############################################################################
+\bibliographystyle{plain}
+\bibliography{my-bibliography}     %loads my-bibliography.bib
+
+% ============================================================================
+\end{document}
+% ============================================================================
