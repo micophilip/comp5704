@@ -7,9 +7,9 @@ Carleton University, Ottawa, Canada
 ---
 
 ### Project Outline
-Privacy-Preserving Data Publishing (PPDP) is an ongoing field of research that involves de-identification of data so that it can be shared for secondary use such as analytics and health care research while minimizing information loss.  
-Balancing data utility and data privacy is a challenging problem and this  research project intends to analyze different anonymization parallel algorithms as well as test, implement and recommend enhancements using MapReduce on Spark clusters.  
-There are multiple techniques and approaches to de-identification such as generalization and perturbation to name a few. This project also aims to analyze different de-identification policies and assess the performance impact of different policies.
+Privacy-Preserving Data Publishing (PPDP) is an ongoing field of research that involves de-identification of data so it can be shared for secondary use such as analytics and health care research while minimizing information loss.  
+Balancing data utility and data privacy is a challenging problem and this research project intends to analyze the implementation of Top-Down Specialization anonymization algorithm on a Spark&trade; cluster. Top-Down Specialization is a technique where values are specialized from the most generic to the most specialized until _k_-anonymity is violated.  
+Top-Down Specialization is one of the methods recommended for anonymizing datasets with large _k_ value requirements. The larger the _k_ the more anonymous the dataset is.
 
 ### Startup Paper(s)
 1. [A top-down k-anonymization implementation for apache spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
