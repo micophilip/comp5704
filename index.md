@@ -1,4 +1,4 @@
-## Project Title: Parallel Anonymization using MapReduce on Apache Spark™
+## Project Title: Parallel Anonymization on Apache Spark™
 ## Name: Macarious Abadeer
 ## Email: macariousabadeer@cmail.carleton.ca
 School of Computer Science  
@@ -12,7 +12,7 @@ Balancing data utility and data privacy is a challenging problem and this resear
 Top-Down Specialization is one of the methods recommended for anonymizing datasets with large _k_ value requirements. The larger the _k_ the more anonymous the dataset is.
 
 ### Startup Paper(s)
-1. [A top-down k-anonymization implementation for apache spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
+1. [A top-down k-anonymization implementation for Apache Spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
 
 ### Deliverables
 * [Literature Review](/assets/project/Literature_Review.pdf)  
