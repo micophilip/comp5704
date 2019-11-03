@@ -1,0 +1,71 @@
+
+% ===========================================================================
+% Title:
+% ---------------------------------------------------------------------------
+% to create Type I fonts type "dvips -P cmz -t letter <filename>"
+% ===========================================================================
+\documentclass[11pt]{article}       %--- LATEX 2e base
+\usepackage{latexsym}               %--- LATEX 2e base
+%---------------- Wide format -----------------------------------------------
+\textwidth=6in \textheight=9in \oddsidemargin=0.25in
+\evensidemargin=0.25in \topmargin=-0.5in
+%--------------- Slide --------------------------------------------------
+\newenvironment{slide}[1]        {\section{#1} \begin{itemize}}%
+                                 {\end{itemize}}
+                                 % usage: \begin{slide}{---SLIDE TITLE---}
+                                 %        \item ...
+                                 %        \item ...
+                                 %        \item ...
+                                 %        \end{slide}
+% ===========================================================================
+\begin{document}
+% ===========================================================================
+
+% ############################################################################
+% Title
+% ############################################################################
+
+\title{PRESENTATION OUTLINE: --- Top Down Specialization on Apache Spark\texttrademark ---}
+
+
+% ############################################################################
+% Author(s) (no blank lines !)
+\author{
+% ############################################################################
+Macarious Abadeer\\
+School of Computer Science\\
+Carleton University\\
+Ottawa, Canada K1S 5B6\\
+{\em macariousabadeer@cmail.carleton.ca}
+% ############################################################################
+} % end-authors
+% ############################################################################
+
+\maketitle
+
+% ############################################################################
+\begin{slide}{Why Data Privacy?}
+\item Introduction to Sweeney's Paper
+\item Incidents involving privacy breaches
+\end{slide}
+
+
+% ############################################################################
+\begin{slide}{$k$-anonymity theory}
+\item Introduction to $k$-anonymization
+\item Dataset Example
+\item Important Definitions: Quasi-Identifiers, Sensitive Attributes
+\item Introduction to Top-Down Specialization
+\end{slide}
+
+\noindent ... more to come ...
+
+% ############################################################################
+% Bibliography
+% ############################################################################
+\bibliographystyle{plain}
+\bibliography{my-bibliography}     %loads my-bibliography.bib
+
+% ============================================================================
+\end{document}
+% ============================================================================
