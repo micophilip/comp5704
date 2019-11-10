@@ -25,7 +25,7 @@
 % Title
 % ############################################################################
 
-\title{PRESENTATION OUTLINE: --- Top Down Specialization on Apache Spark\texttrademark ---}
+\title{PRESENTATION OUTLINE: Top Down Specialization on Apache Spark\texttrademark}
 
 
 % ############################################################################
@@ -49,16 +49,124 @@ Ottawa, Canada K1S 5B6\\
 \item Incidents involving privacy breaches
 \end{slide}
 
+% ############################################################################
+\begin{slide}{Important Definitions}
+\item Quasi-Identifiers
+\item Sensitive Attributes
+\item Taxonomy Trees
+\item Anonymization Level
+\end{slide}
 
 % ############################################################################
 \begin{slide}{$k$-anonymity theory}
 \item Introduction to $k$-anonymization
-\item Dataset Example
-\item Important Definitions: Quasi-Identifiers, Sensitive Attributes
-\item Introduction to Top-Down Specialization
+\item Variations including $l$-diversity and $t$-closeness
 \end{slide}
 
-\noindent ... more to come ...
+% ############################################################################
+\begin{slide}{Dataset Example}
+\item $k$-anonymized dataset
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Existing solutions}
+\item Bottom-Up Generalization
+\item Top-Down Specialization
+\item Combining Top-Down and Bottom-Up
+\item Differential Privacy
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Top-Down Specialization}
+\item Algorithm overview
+\item Information gain
+\item Privacy loss
+\item Scoring anonymization levels
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Preprocessing}
+\item Removing non-QIDs
+\item Grouping QIDs together and calculating count
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Parent-Child Taxonomy Mapping}
+\item Algorithm for building parent-child mapping from taxonomy trees
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Anonymization process}
+\item Generalize all QIDs to root of anonymization levels
+\item Calculating best score for anonymization levels
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Score calculation}
+\item Parent entropy calculation
+\item Children entropy calculation
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Determining Top-Scoring Anonymization Level}
+\item Building score maps
+\item Updating parent-child mapping with top scoring anonymization level
+\item Calculating $k$
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Enhancing Performance}
+\item Introduction to Apache Spark
+\item Spark partitioning
+\item Using tail recursion
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Spark Tuning}
+\item Spark configuration
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Environment setup}
+\item Setting up spark
+\item Cores, memory and disk size used
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Test Dataset}
+\item Original dataset
+\item Enlargement technique
+\item Sizes tested
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Tests}
+\item Different values of $k$
+\item Number of rows for each test
+\item Number of nodes
+\item Number of partitions
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Results}
+\item Charts by dataset size, values of k, number of nodes, number of partitions
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Comparison with Existing Paper}
+\item Side-by-side comparison with existing paper's results
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Personal Observations}
+\item Comments on the algorithm from working in the data privacy industry
+\end{slide}
+
+% ############################################################################
+\begin{slide}{Future Work}
+\item Areas for further improvement
+\end{slide}
+
 
 % ############################################################################
 % Bibliography
