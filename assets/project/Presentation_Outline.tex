@@ -44,71 +44,44 @@ Ottawa, Canada K1S 5B6\\
 \maketitle
 
 % ############################################################################
-\begin{slide}{Why Data Privacy?}
-\item Introduction to Sweeney's Paper
+\begin{slide}{Introduction - Why Data Privacy?}
 \item Incidents involving privacy breaches
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Important Definitions}
-\item Quasi-Identifiers
-\item Sensitive Attributes
-\item Taxonomy Trees
-\item Anonymization Level
+\item Important definitions: Quasi-Identifiers, Sensitive Attributes, Taxonomy Trees
 \end{slide}
 
 % ############################################################################
 \begin{slide}{$k$-anonymity theory}
-\item Introduction to $k$-anonymization
-\item Variations including $l$-diversity and $t$-closeness
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Dataset Example}
-\item $k$-anonymized dataset
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Existing solutions}
-\item Bottom-Up Generalization
-\item Top-Down Specialization
-\item Combining Top-Down and Bottom-Up
-\item Differential Privacy
+\item $k$-anonymous datasets
+\item Example
 \end{slide}
 
 % ############################################################################
 \begin{slide}{Top-Down Specialization}
 \item Algorithm overview
-\item Information gain
-\item Privacy loss
-\item Scoring anonymization levels
+\item Scoring best anonymization level
 \end{slide}
 
 % ############################################################################
 \begin{slide}{Preprocessing}
 \item Removing non-QIDs
-\item Grouping QIDs together and calculating count
+\item Grouping QIDs and SAs together and calculating count
+\item Build parent-child mapping from taxonomy tree
 \end{slide}
 
 % ############################################################################
-\begin{slide}{Parent-Child Taxonomy Mapping}
-\item Algorithm for building parent-child mapping from taxonomy trees
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Anonymization process}
+\begin{slide}{Step 1. Anonymization process}
 \item Generalize all QIDs to root of anonymization levels
 \item Calculating best score for anonymization levels
 \end{slide}
 
 % ############################################################################
-\begin{slide}{Score calculation}
+\begin{slide}{Step 2. Score calculation}
 \item Parent entropy calculation
 \item Children entropy calculation
 \end{slide}
 
 % ############################################################################
-\begin{slide}{Determining Top-Scoring Anonymization Level}
+\begin{slide}{Step 3. Determining Top-Scoring Anonymization Level}
 \item Building score maps
 \item Updating parent-child mapping with top scoring anonymization level
 \item Calculating $k$
@@ -119,52 +92,24 @@ Ottawa, Canada K1S 5B6\\
 \item Introduction to Apache Spark
 \item Spark partitioning
 \item Using tail recursion
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Spark Tuning}
 \item Spark configuration
 \end{slide}
 
 % ############################################################################
-\begin{slide}{Environment setup}
-\item Setting up spark
+\begin{slide}{Test Environment setup}
+\item Spark setup on OpenStack cluster
 \item Cores, memory and disk size used
+\item Datasets used
 \end{slide}
 
 % ############################################################################
-\begin{slide}{Test Dataset}
-\item Original dataset
-\item Enlargement technique
-\item Sizes tested
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Tests}
-\item Different values of $k$
-\item Number of rows for each test
-\item Number of nodes
-\item Number of partitions
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Results}
-\item Charts by dataset size, values of k, number of nodes, number of partitions
+\begin{slide}{Test Results}
+\item Charts by dataset size, values of $k$, number of nodes, number of partitions
 \end{slide}
 
 % ############################################################################
 \begin{slide}{Comparison with Existing Paper}
 \item Side-by-side comparison with existing paper's results
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Personal Observations}
-\item Comments on the algorithm from working in the data privacy industry
-\end{slide}
-
-% ############################################################################
-\begin{slide}{Future Work}
-\item Areas for further improvement
 \end{slide}
 
 
