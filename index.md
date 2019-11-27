@@ -17,7 +17,7 @@ Top-Down Specialization is one of the methods recommended for anonymizing datase
 ### Deliverables
 * [Literature Review](/assets/project/Literature_Review.pdf)  
 * [Presentation Outline](/assets/project/Presentation_Outline.pdf)  
-* Slide Presentation (PowerPoint File) incl. Question Sheet  
+* Slide Presentation ([\*.pdf](/assets/project/Presentation.pdf) | [\*.pptx](/assets/project/Presentation.pptx))  
 * Final Paper  
 * Code and Data  
 
