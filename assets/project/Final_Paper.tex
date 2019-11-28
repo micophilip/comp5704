@@ -86,19 +86,13 @@ Since the introduction of multi-core processors in 2004 by Intel\textsuperscript
 
 In today's abundance of big data ranging from retail and banking transactions, health care, social media interactions and sensor data, a need was created for measures that protect people's most private and sensitive data. One of the most popular theories that were developed in this area was $k$-anonymity developed by Samarati and Sweeney in 1998 \cite{Samarati-P.:1998}. Sweeney argued that an individual in a dataset can be identified when the dataset is linked with other public datasets even if the original dataset did not contain identifying information such as name, date of birth and social insurance number. Sweeney was able to show that when linking voter registration cards and health care data, individuals can be identified with 87\% accuracy. Those potentially identifying attributes are called Quasi-Identifiers (QID). $k$-anonymity states that a dataset is called $k$-anonymous when for a given record, there exists at least \(k-1\) records in the same dataset with the same QID values.  Further modifications to $k$-anonymity were made to overcome its shortcomings such as introducing $\ell$-diversity \cite{Machanavajjhala:2007} and $t$-closeness \cite{Li-N.:2007}. $\ell$-diversity ensures that sensitive attributes, such as diagnosis in a health care dataset, need to have diverse values so that an adversary who knows the values of a given QIDs cannot deduce their diagnosis. $t$-closeness ensures that the distribution of these diverse values is close to their distribution in the original dataset.
 
-While these theories contributed immensely to the practices of data anonymization, $k$-anonymity was proven to be $\mathcal{NP}$-hard by Meyerson and Williams \cite{Meyerson:2004}. Further research used these models as a baseline to develop scalable parallel algorithms that can handle big data. In the next section I will go over the different ideas that were proposed to optimize and scale $k$-anonymity.
+While these theories contributed immensely to the practices of data anonymization, $k$-anonymity was proven to be $\mathcal{NP}$-hard by Meyerson and Williams \cite{Meyerson:2004}. Further research used these models as a baseline to develop scalable parallel algorithms that can handle big data.
 
-Introduce your project topic (start from parallel computing in
-general and lead to your particular topic). Describe your project
-goals. Describe what you have achieved in your project. Outline
-the structure of your paper. (In Section~\ref{litrev}, we will
-review the relevant literature. Section x will present
-the results of our project. In Section y, ...
-Section z concludes the paper.
+The paper is organized as follows: in Section~\ref{literature}, I will go over the different ideas that were proposed to optimize and scale $k$-anonymity. Section~\ref{solution} will detail a proposed solution implemented and Section~\ref{evaluation} presents the experimentation results of the proposed solution and the paper finally concludes in Section~\ref{conclusion}.
 
 
 % ############################################################################
-\section{Literature Review} \label{litrev}
+\section{Literature Review} \label{literature}
 % ############################################################################
 
 There are three different masking types that are used to satisfy $k$-anonymity: interval, taxonomy tree and suppression \cite{Al-Zobbi-Mohammed:2018}. Suppression requires certain outlier tuples to be removed to satisfy $k$-anonymity \cite{Samarati-P.:1998}. Intervals and taxonomy trees are generalization techniques applied to numerical and categorical attributes respectively \cite{Samarati-P.:1998}. For example two records with birth year of 1971 and 1973 can be generalized to 1970-1975. For a taxonomy tree, a categorical attribute such as education level can have, for example, post-graduate as a parent node which can have PhD, Masters and Post Graduate Diploma as its child leaves so that records with these values can be generalized to the parent node. The majority of research papers on anonymization with respect to big data involved taxonomy trees thus this is where I focus my literature survey.
@@ -124,25 +118,41 @@ Another solution was implemented to provide a parallel anonymization of transact
 Other frameworks were also developed to address specific variations to $k$-anonymity mentioned such as $t$-closeness introduced by \cite{Li-N.:2007}. For example, \cite{Chakravorty:2017} developed a framework called Incognito using MapReduce that generates a distribution of sensitive attributes based on their count in the dataset. Given the frequency histogram generated, subsets of the sensitive attribute values that have the same parent in the taxonomy tree are put together in the same data bucket. The tree is sorted from left to right nodes in an ascending order of their frequencies in the generated histogram. The anonymized dataset is then mapped to the generated tree in order to ensure anonymized dataset is close to the original dataset in terms of distribution of values.
 
 % ############################################################################
-\section{Problem Statement}
+\section{Problem Statement} \label{problem}
 % ############################################################################
 
-\begin{enumerate}
-\item A concise statement of the question that your paper tackles.
-\item Justification, by direct reference to your Literature Review, that your question is previously unanswered.
-\item Discussion of why it is worthwhile to answer this question.
-\end{enumerate}
+This paper tackles the scalability of anonymization algorithms for Big Data specifically Top Down Specialization algorithm. There was only a handful of papers in the literature reviewed in Section~\ref{literature} that implemented anonymization algorithms on Spark and only one that implemented Top Down Specialization \cite{Sopaoglu:2017}. In that implementation the performance was assessed only up to 500 MB of data which is relatively small in the context of Big Data. This paper aims to assess the performance of Top Down Specialization on Spark for datasets larger than 500 MB. It will also use number of records as the gauge instead of size on disk. The question I aim to answer, how does Top Down Specialization scale up for datasets larger than 5 million rows? Are there any optimizations that can be done to improve speedups? Are there any new Spark features that were developed since the time when \cite{Sopaoglu:2017} was implemented that could improve performance?
 
 % ############################################################################
-\section{Proposed Solution: ...}
+\section{Proposed Solution} \label{solution}
 % ############################################################################
 
 This part of the paper is much more free-form. It may have one or several sections and subsections. But it all has only one purpose: to convince the reader that you answered the question or solved the problem that you set for yourself. In this section you will for example present new algorithms you developed and your implementation of these new algorithms.
 
+\subsection{Introduction to $k$-anonymity}
+
+Introduction to $k$-anonymity goes here...
+
+\subsection{Top Down Specialization}
+
+Top down specialization
+
+\subsection{Pre-Processing}
+
+Preprocessing, building path maps
+
+\subsection{Main Algorithm}
+
+Pseudo code, discussion
+
+\subsection{Performance enhancements}
+
+Performance enhancements, partitioning, having one aggregation per iteration
+
 % usage: \includeFig{label}{file}{caption}
 
 % ############################################################################
-\section{Experimental Evaluation} \label{expEval}
+\section{Experimental Evaluation} \label{evaluation}
 % ############################################################################
 
 This section is not mandatory for all papers (for example theory papers) but typically required for papers in the field of parallel computing. After all, parallel computing is all about compute performance. Here you present performance data obtained from e.g. running your newly developed algorithms and code on a parallel machine using some benchmark input data. Typically, you need to describe the parallel machine you used and the data that you used as input. The main results are usually performance graphs, typically speedup curves. You want to evaluate your code on different input data sets highlighting the strengths and weaknesses of your code. Don’t just use best case scenarios. People will call you on that. Discuss the results obtained.
@@ -150,7 +160,7 @@ This section is not mandatory for all papers (for example theory papers) but typ
 % usage: \includeFig{label}{file}{caption}
 
 % ############################################################################
-\section{Conclusions}
+\section{Conclusions} \label{conclusion}
 % ############################################################################
 
 You generally cover three things in the Conclusions section.
