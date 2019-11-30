@@ -1,4 +1,3 @@
-
 % ===========================================================================
 % Title:
 % ---------------------------------------------------------------------------
@@ -6,6 +5,12 @@
 % ===========================================================================
 \documentclass[11pt]{article}       %--- LATEX 2e base
 \usepackage{latexsym}               %--- LATEX 2e base
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+\usepackage{forest}
+\usepackage{adjustbox}
+\usepackage{amsmath}
 %---------------- Wide format -----------------------------------------------
 \textwidth=6in \textheight=9in \oddsidemargin=0.25in
 \evensidemargin=0.25in \topmargin=-0.5in
@@ -84,11 +89,11 @@ A very concise summary of the problem addressed and solution presented in this p
 
 Since the introduction of multi-core processors in 2004 by Intel\textsuperscript{\textregistered}, parallel computing evolved to exploit the advantages of multiple processing units that became the norm for personal computers. This evolution was also expanded and accelerated by the advancements in Cloud Computing that supported running compute-intensive applications over a network of clusters. Parallel computing enabled the development of solutions to different real world applications that were hindered by scalability limitations such as big data analytics, machine learning and artificial intelligence. One of the problems that parallel computing provided scaleable solutions for is data anonymization, especially for big data. 
 
-In today's abundance of big data ranging from retail and banking transactions, health care, social media interactions and sensor data, a need was created for measures that protect people's most private and sensitive data. One of the most popular theories that were developed in this area was $k$-anonymity developed by Samarati and Sweeney in 1998 \cite{Samarati-P.:1998}. Sweeney argued that an individual in a dataset can be identified when the dataset is linked with other public datasets even if the original dataset did not contain identifying information such as name, date of birth and social insurance number. Sweeney was able to show that when linking voter registration cards and health care data, individuals can be identified with 87\% accuracy. Those potentially identifying attributes are called Quasi-Identifiers (QID). $k$-anonymity states that a dataset is called $k$-anonymous when for a given record, there exists at least \(k-1\) records in the same dataset with the same QID values.  Further modifications to $k$-anonymity were made to overcome its shortcomings such as introducing $\ell$-diversity \cite{Machanavajjhala:2007} and $t$-closeness \cite{Li-N.:2007}. $\ell$-diversity ensures that sensitive attributes, such as diagnosis in a health care dataset, need to have diverse values so that an adversary who knows the values of a given QIDs cannot deduce their diagnosis. $t$-closeness ensures that the distribution of these diverse values is close to their distribution in the original dataset.
+In today's abundance of big data ranging from retail and banking transactions, health care, social media interactions and sensor data, a need was created for measures that protect people's most private and sensitive data. One of the most popular theories that were developed in this area was $k$-anonymity developed by Samarati and Sweeney in 1998 \cite{Samarati-P.:1998}. Sweeney argued that an individual in a dataset can be identified when the dataset is linked with other public datasets even if the original dataset did not contain identifying information such as name, date of birth and social insurance number. Sweeney was able to show that when linking voter registration cards and health care data, individuals can be identified with 87\% accuracy. Those potentially identifying attributes are called Quasi-Identifiers (QID). $k$-anonymity states that a dataset is called $k$-anonymous when for a given record, there exists at least \(k-1\) records in the same dataset with the same QID values.  Further modifications to $k$-anonymity were made to overcome its shortcomings such as introducing $\ell$-diversity \cite{Machanavajjhala:2007} and $t$-closeness \cite{Li-N.:2007}. $\ell$-diversity ensures that sensitive attributes, such as diagnosis in a health care dataset, need to have diverse values so that an adversary with foreknowledge of a given QID set cannot deduce their diagnosis. $t$-closeness ensures that the distribution of these diverse values is close to their distribution in the original dataset.
 
 While these theories contributed immensely to the practices of data anonymization, $k$-anonymity was proven to be $\mathcal{NP}$-hard by Meyerson and Williams \cite{Meyerson:2004}. Further research used these models as a baseline to develop scalable parallel algorithms that can handle big data.
 
-The paper is organized as follows: in Section~\ref{literature}, I will go over the different ideas that were proposed to optimize and scale $k$-anonymity. Section~\ref{solution} will detail a proposed solution implemented and Section~\ref{evaluation} presents the experimentation results of the proposed solution and the paper finally concludes in Section~\ref{conclusion}.
+The paper is organized as follows: in Section~\ref{literature}, I will go over the different ideas that were proposed to optimize and scale $k$-anonymity. Section~\ref{solution} will detail an implemented proposed solution and Section~\ref{evaluation} presents the experimentation results of the algorithm and the paper finally concludes in Section~\ref{conclusion}.
 
 
 % ############################################################################
@@ -121,7 +126,7 @@ Other frameworks were also developed to address specific variations to $k$-anony
 \section{Problem Statement} \label{problem}
 % ############################################################################
 
-This paper tackles the scalability of anonymization algorithms for Big Data specifically Top Down Specialization algorithm. There was only a handful of papers in the literature reviewed in Section~\ref{literature} that implemented anonymization algorithms on Spark and only one that implemented Top Down Specialization \cite{Sopaoglu:2017}. In that implementation the performance was assessed only up to 500 MB of data which is relatively small in the context of Big Data. This paper aims to assess the performance of Top Down Specialization on Spark for datasets larger than 500 MB. It will also use number of records as the gauge instead of size on disk. The question I aim to answer, how does Top Down Specialization scale up for datasets larger than 5 million rows? Are there any optimizations that can be done to improve speedups? Are there any new Spark features that were developed since the time when \cite{Sopaoglu:2017} was implemented that could improve performance?
+This paper tackles the scalability of anonymization algorithms for Big Data specifically Top Down Specialization algorithm. There was only a handful of papers in the literature reviewed in Section~\ref{literature} that implemented anonymization algorithms on Spark and only one that implemented Top Down Specialization \cite{Sopaoglu:2017}. In that implementation the performance was assessed only up to 500 MB of data which is relatively small in the context of Big Data. This paper aims to assess the performance of Top Down Specialization on Spark for datasets larger than 500 MB. It will also use number of records as the gauge instead of size on disk. The question I aim to answer, how does Top Down Specialization scale up for datasets larger than 5 million rows or 500 MB? Are there any optimizations that can be done to improve speedups? Are there any new Spark features that were developed since the time when \cite{Sopaoglu:2017} was implemented that could improve performance?
 
 % ############################################################################
 \section{Proposed Solution} \label{solution}
@@ -131,11 +136,93 @@ This part of the paper is much more free-form. It may have one or several sectio
 
 \subsection{Introduction to $k$-anonymity}
 
-Introduction to $k$-anonymity goes here...
+It is important to review definitions that will be used throughout this paper.
+
+\begin{definition}[$k$-anonymity]
+A dataset is called $k$-anonymous if for every record there exists at least \(k-1\) other records with the same Quasi-Identifier values. 
+\end{definition}
+
+\begin{definition}[Quasi-Identifiers]
+Quasi-Identifiers are attributes that do not directly identify an individual, but when used together and linked with other datasets they have the potential of identifying an individual. They will be referred to as $QID$ throughout the paper.
+\end{definition}
+
+\begin{definition}[Sensitive Attributes] 
+Sensitive Attributes are attributes that should remain private. They will be referred to as $SA$ throughout the paper.
+\end{definition}
+
+\begin{definition}[Taxonomy Trees]
+Taxonomy Trees are logical hierarchies of distinct values in a dataset.
+\end{definition}
+
+For example, in Table~\ref{table:1} \emph{Education}, \emph{Gender} and \emph{City} are examples of $QID$s while \emph{Income} is an example of $SA$. Table~\ref{table:1} does not satisfy $k$-anonymity since there are two unique records with the same $QID$ values. For example, an adversary with foreknowledge of the existence of an Orleans Male with a Master's degree in the dataset will be able to deduce the individual's income. The two records violating $k$-anonymity are highlighted in Table~\ref{table:1}.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Education & Gender & City & Income \\
+\hline
+Grade 12 & Female & Nepean & \$65,000 \\
+Bachelor's & Male & Ottawa & \$50,000 \\
+\rowcolor [HTML]{EAECEE} Master’s & Male & Orleans & \$50,000 \\
+\rowcolor [HTML]{EAECEE} PhD & Male & Gloucester & \$100,000 \\
+Grade 12 & Female & Nepean & \$80,000 \\
+Associate & Female & Kanata & \$90,000 \\
+Associate & Female & Kanata & \$105,000 \\
+Bachelor's & Male & Ottawa & \$50,000 \\
+\hline
+\end{tabular}
+\end{center}
+\label{table:1}
+\caption{Dataset violating $k$-anonymity}
+\end{table}
+
+Figure~\ref{figure:1} represents a taxonomy tree for \emph{Education} column. The leaf nodes in the tree represent the distinct values present in the dataset. Taxonomy trees are provided by either the data provider or the data recipient for all $QID$ in the dataset. The root node of all taxonomy trees is \emph{Any}.
+
+\begin{figure}[htp]
+\begin{adjustbox}{width=\textwidth, center}
+\begin{forest}
+for tree={rectangle, edge={->,>=latex}, draw, align=center}
+[Any,thick [Without-Post-Secondary [Preschool] [Elementary [1st-4th] [5th-6th] [7th-8th]] [Secondary [Junior-Secondary [9th] [10th]] [Senior-Secondary [11th] [12th] [HS-grad]]]] [Post-secondary [Some-college] [Assoc [Assoc-acdm] [Assoc-voc]] [University [Bachelors] [Prof-school] [Post-grad [Masters] [Doctorate]]]]]
+\end{forest}
+\end{adjustbox}
+\caption{Education Taxonomy Tree}
+\label{figure:1}
+\end{figure}
 
 \subsection{Top Down Specialization}
 
-Top down specialization
+Top down specialization algorithm is comprised of the following steps:
+
+\begin{enumerate}
+  \item All non-$QID$s are removed from dataset
+  \item $QID$s and $SA$s are grouped together and count is calculated for every group
+  \item A set of Anonymization Levels $AL$ is created. The set initially includes the taxonomy trees of all attributes.
+  \item All $QID$ values are generalized to the root of the respective $AL$
+  \item A score is calculated for every $AL$ using Equation~\ref{score}
+  \item The $AL$ with the highest score is selected, the root is removed from the $AL$ set and its children are added
+  \item Iterate 4 through 6 until $k$ is violated
+\end{enumerate}
+
+\begin{equation}
+Score(\nu) = \begin{cases}
+\frac{InfoGain(\nu)} {PrivacyLoss(\nu)} & PrivacyLoss(\nu) \neq 0\\
+InfoGain(\nu) & otherwise
+\end{cases}
+\label{score}
+\end{equation}
+
+\begin{equation}
+InfoGain(\nu) = I(R_\nu) - \sum\limits_{\text{$c$} \in children(\nu)} \frac{|R_{\nu\text{$c$}}|}{|R_\nu|} I(R_{\nu\text{$c$}})
+\end{equation}
+
+\begin{equation}
+I(R_\nu) = - \sum\limits_{\text{$s$}\nu \in \text{\{$SA$\}}} \frac{| R_{\nu\text{$s$}\nu} |}{ | R_\nu |} \times \log_2 \frac{| R_{\nu\text{$s$}\nu} |}{ | R_\nu |}
+\end{equation}
+
+\begin{equation}
+PrivacyLoss(\nu) = k(R_\nu) - k(R_{\nu\text{$c$}})
+\end{equation}
 
 \subsection{Pre-Processing}
 
