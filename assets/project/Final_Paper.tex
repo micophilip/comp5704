@@ -25,20 +25,7 @@
 \newenvironment{proof}           {\noindent{\bf Proof.} }%
                                  {\null\hfill$\Box$\par\medskip}
 %--------------- Algorithm --------------------------------------------------
-\newtheorem{algX}{Algorithm}
-\newenvironment{algorithm}       {\begin{algX}\begin{em}}%
-                                 {\par\noindent --- End of Algorithm ---
-                                 \end{em}\end{algX}}
-\newcommand{\step}[2]            {\begin{list}{}
-                                  {  \setlength{\topsep}{0cm}
-                                     \setlength{\partopsep}{0cm}
-                                     \setlength{\leftmargin}{0.8cm}
-                                     \setlength{\labelwidth}{0.7cm}
-                                     \setlength{\labelsep}{0.1cm}    }
-                                  \item[#1]#2    \end{list}}
-                                 % usage: \begin{algorithm} \label{xyz}
-                                 %        ... \step{(1)}{...} ...
-                                 %        \end{algorithm}
+\usepackage[ruled, lined, vlined, linesnumbered]{algorithm2e}
 %--------------- Figures ----------------------------------------------------
 \usepackage{graphicx}
 
@@ -154,7 +141,7 @@ Sensitive Attributes are attributes that should remain private. They will be ref
 Taxonomy Trees are logical hierarchies of distinct values in a dataset.
 \end{definition}
 
-For example, in Table~\ref{table:1} \emph{Education}, \emph{Gender} and \emph{City} are examples of $QID$s while \emph{Income} is an example of $SA$. Table~\ref{table:1} does not satisfy $k$-anonymity since there are two unique records with the same $QID$ values. For example, an adversary with foreknowledge of the existence of an Orleans Male with a Master's degree in the dataset will be able to deduce the individual's income. The two records violating $k$-anonymity are highlighted in Table~\ref{table:1}.
+For example, in Table~\ref{table1} \emph{Education}, \emph{Gender} and \emph{City} are examples of $QID$s while \emph{Income} is an example of $SA$. Table~\ref{table1} does not satisfy $k$-anonymity since there are two unique records with the same $QID$ values. For example, an adversary with foreknowledge of the existence of an Orleans Male with a Master's degree in the dataset will be able to deduce the individual's income. The two records violating $k$-anonymity are highlighted in Table~\ref{table1}.
 
 \begin{table}[htp]
 \begin{center}
@@ -173,11 +160,11 @@ Bachelor's & Male & Ottawa & \$50,000 \\
 \hline
 \end{tabular}
 \end{center}
-\label{table:1}
+\label{table1}
 \caption{Dataset violating $k$-anonymity}
 \end{table}
 
-Figure~\ref{figure:1} represents a taxonomy tree for \emph{Education} column. The leaf nodes in the tree represent the distinct values present in the dataset. Taxonomy trees are provided by either the data provider or the data recipient for all $QID$ in the dataset. The root node of all taxonomy trees is \emph{Any}.
+Figure~\ref{taxonomyTree} represents a taxonomy tree for \emph{Education} column. The leaf nodes in the tree represent the distinct values present in the dataset. Taxonomy trees are provided by either the data provider or the data recipient for all $QID$ in the dataset. The root node of all taxonomy trees is \emph{Any}.
 
 \begin{figure}[htp]
 \begin{adjustbox}{width=\textwidth, center}
@@ -187,22 +174,12 @@ for tree={rectangle, edge={->,>=latex}, draw, align=center}
 \end{forest}
 \end{adjustbox}
 \caption{Education Taxonomy Tree}
-\label{figure:1}
+\label{taxonomyTree}
 \end{figure}
 
-\subsection{Top Down Specialization}
+\subsection{Introduction to Top Down Specialization} \label{tdsIntro}
 
-Top down specialization algorithm is comprised of the following steps:
-
-\begin{enumerate}
-  \item All non-$QID$s are removed from dataset
-  \item $QID$s and $SA$s are grouped together and count is calculated for every group
-  \item A set of Anonymization Levels $AL$ is created. The set initially includes the taxonomy trees of all attributes.
-  \item All $QID$ values are generalized to the root of the respective $AL$
-  \item A score is calculated for every $AL$ using Equation~\ref{score}
-  \item The $AL$ with the highest score is selected, the root is removed from the $AL$ set and its children are added
-  \item Iterate 4 through 6 until $k$ is violated
-\end{enumerate}
+Top Down Specialization algorithm begins by removing all non $QID$s from the dataset. The resulting dataset is then grouped by $QID$ and $SA$ and the count is calculated for every group. A set of trees called Anonymization Cuts \{$AC$\} is created where it initially contains the taxonomy trees of all $QID$. The $AC$ represents what level of the taxonomy tree to which each $QID$ value will be generalized. The algorithm starts with generalizing all values to the root of the corresponding $AC$. The basic idea of the algorithm is that it starts from the top of the taxonomy tree and starts specializing the values until $k$ is violated. However, it does not simply specialize all attributes. It calculates a score for every $AC$ and only specializes the $AC$ with the highest score. The score which is shown in Equation~\ref{score} calculates the information gain per privacy loss for every $AC$. In other words, which $AC$ will provide the best information gain and the least privacy loss. Information gain involves counting all the values that get generalized to the $AC$'s root (\(|R_\nu|\)), the count of all values that get generalized to the $AC$'s root's children (\(|R_{\nu c}|\)), the count of all values that get generalized to the root for each value in \{$SA$\} and finally the count of all values that get generalized to $AC$'s root's children for each value in \{$SA$\}. The whole equation is shown in Equation~\ref{infoGain} below. The privacy loss involves calculating $k$ before specialization minus $k$ after specialization. The reason for this is that as we specialize values along the $AC$ trees, the data becomes more useful yet less private. The privacy loss equation is shown in Equation~\ref{privacyLoss}. Once the score is calculated, the root $AC$ with the highest score is removed from \{$AC$\} and its children are added as separate trees to the set of \{$AC$\}. The algorithm re-iterates with the new set of \{$AC$\} until $k$ is violated. The values in the dataset are finally generalized to the root of the final \{$AC$\} set and that represents the anonymized dataset.
 
 \begin{equation}
 Score(\nu) = \begin{cases}
@@ -214,23 +191,179 @@ InfoGain(\nu) & otherwise
 
 \begin{equation}
 InfoGain(\nu) = I(R_\nu) - \sum\limits_{\text{$c$} \in children(\nu)} \frac{|R_{\nu\text{$c$}}|}{|R_\nu|} I(R_{\nu\text{$c$}})
+\label{infoGain}
 \end{equation}
 
 \begin{equation}
-I(R_\nu) = - \sum\limits_{\text{$s$}\nu \in \text{\{$SA$\}}} \frac{| R_{\nu\text{$s$}\nu} |}{ | R_\nu |} \times \log_2 \frac{| R_{\nu\text{$s$}\nu} |}{ | R_\nu |}
+I(R_\nu) = - \sum\limits_{sv \in \text{\{$SA$\}}} \frac{| R_{\nu\text{$sv$}} |}{ | R_\nu |} \times \log_2 \frac{| R_{\nu\text{$sv$}} |}{ | R_\nu |}
+\label{entropy}
 \end{equation}
 
 \begin{equation}
-PrivacyLoss(\nu) = k(R_\nu) - k(R_{\nu\text{$c$}})
+PrivacyLoss(\nu) = |R_\nu| - \min(\{|R_{\nu c}|\})
+\label{privacyLoss}
 \end{equation}
+
+Fung et. al provided an example in \cite{Fung:2005} which helps illustrate the calculations. I include it here for completeness. Using Table~\ref{table2} as our dataset, \emph{SA} in this case is the \emph{Income} attribute. $AC$ element to score is the $Education$ taxonomy tree shown in Figure~\ref{taxonomyTree} with $Any$ at its root. Calculating the score of this particular $AC$ is as follows:
+
+\begin{itemize}
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Any}: \(| R_\nu | = 34\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(>50k\): \(| R_{\nu sv} | = 21\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(\leq50k\): \(| R_{\nu sv} | = 13\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary}: \(| R_{\nu c} | = 16\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary}: \(| R_{\nu c} | = 18\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(>50k\): \(| R_{\nu csv} | = 5\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(\leq50k\): \(| R_{\nu csv} | = 11\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(>50k\): \(| R_{\nu csv} | = 16\)
+  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(\leq50k\): \(| R_{\nu csv} | = 2\)
+  \item Anonymity before specialization is \(| R_\nu | = 34\)
+  \item Anonymity after specialization is \(min(16, 18) = 16\)
+\end{itemize}
+
+Plugging these values in Equations~\ref{score} through \ref{privacyLoss} we get:
+
+\[ I (R_{Any\_Edu}) = (- \frac{21}{34} \times \log_2 \frac{21}{34}) + (- \frac{13}{34} \times \log_2 \frac{13}{34}) = 0.9597 \]
+
+\[ I (R_{Without-Post-Secondary\_Edu}) = (- \frac{5}{16} \times \log_2 \frac{5}{16}) + (- \frac{11}{16} \times \log_2 \frac{11}{16}) = 0.8960 \]
+
+\[ I (R_{Post-Secondary\_Edu}) = (- \frac{16}{18} \times \log_2 \frac{16}{18}) + (- \frac{2}{18} \times \log_2 \frac{2}{18}) = 0.5033 \]
+
+\[ InfoGain(Any\_Edu) = 0.9597 - (\frac{16}{34} \times 0.8960 + \frac{18}{34} \times 0.5033) = 0.2716 \]
+
+\[ PrivacyLoss(Any\_Edu) = 34 - 16 = 18 \]
+
+\[ Score(Any\_Edu) = \frac{0.2716}{18} = 0.151 \]
+
+Once the calculations are done for every tree in $AC$, let's say \emph{Education\_Any} has the highest score, then \emph{Any} is removed from $AC$ set and its subtree rooted at \emph{Without-Post-Secondary} is added along with the subtree rooted at \emph{Post-Secondary} so that the subsequent iteration calculates the score of these two subtrees separately along with the rest of the existing $AC$ set.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Education & Gender & Age & Income & count \\
+\hline
+9th & M & 30 & $\leq \text{50k}$ & 3 \\
+10th & M & 32 & $\leq \text{50k}$ & 4 \\
+11th & M & 35 & $> \text{50k}$ & 2 \\
+11th & M & 35 & $\leq \text{50k}$ & 3 \\
+12th & F & 37 & $> \text{50k}$ & 3 \\
+12th & F & 37 & $\leq \text{50k}$ & 1 \\
+\hline
+Bachelors & F & 42 & $> \text{50k}$ & 4 \\
+Bachelors & F & 42 & $\leq \text{50k}$ & 2 \\
+Bachelors & F & 44 & $> \text{50k}$ & 4 \\
+Masters & M & 44 & $> \text{50k}$ & 4 \\
+Masters & F & 44 & $> \text{50k}$ & 3 \\
+Doctorate & F & 44 & $> \text{50k}$ & 1 \\
+\hline
+\end{tabular}
+\end{center}
+\label{table2}
+\caption{Calculating best score}
+\end{table}
 
 \subsection{Pre-Processing}
 
-Preprocessing, building path maps
+As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterative algorithm that involves using the same dataset multiple times to perform different calculations. This type of algorithms is best suited for Apache Spark\texttrademark~as shown in Section~\ref{literature}.
+
+In order to prepare our dataset for the main algorithm. First we need to remove all non-$QID$ columns from the dataset. We then perform a group by query for \( \{QID\} \cup \{SA\} \) with the count of every group as shown in the example in Table~\ref{table2}.
+
+Since there are multiple iterations that involves traversing the trees in $AC$, we ultimately need to access the tree root in \(\mathcal{O}(1)\) time since this will be performed on every cell in the dataset. Therefore, I present an algorithm that runs during the preprocessing stage to build Path Maps from taxonomy trees.
+
+First, we need to build a parent-child mapping by traversing the taxonomy trees in a breadth-first tail-recursive manner as shown in Algorithm~\ref{parentChildMap}. Tail recursion is a feature in Scala which provides a way to calculate the intermediate results so that the stack does not dramatically increase by function calls as it happens in traditional recursive calls. The $Traverse$ function traverses through every node in the tree. If a node is not a leaf node, it adds the current node to a queue as many times as its number of children. For example, when we are traversing the node $Any$ in Figure~\ref{taxonomyTree}, we see that it has two children, therefore after Line~\ref{parentQueueUpdate}, $parentQueue$ will contain [$Any$, $Any$]. This way, when we traverse \emph{Without-Post-Secondary} and \emph{Post-Secondary} we dequeue $Any$ twice, and $parentChildMap$ will contain two elements: [\{$key$: \emph{Without-Post-Secondary}, $value$: $Any$\}, \{$key$: \emph{Post-Secondary}, $value$: $Any$\}]
+
+\begin{algorithm}[h]
+\label{parentChildMap}
+\caption{Building Parent Child Mapping}
+\SetKwFunction{FTraverse}{Traverse}
+\SetKwFunction{FIsLeaf}{IsLeaf}
+\SetKwFunction{FDequeue}{Dequeue}
+\SetKwFunction{FEnqueue}{Enqueue}
+\SetKwFunction{FIsEmpty}{IsEmpty}
+\SetKwFunction{FGetChildren}{GetChildren}
+\SetKwProg{Fn}{Function}{:}{}
+\KwIn{childrenList, parentQueue}
+\KwOut{parentChildMap}
+\BlankLine
+\Fn {\FTraverse{$children$, $parentQueue$}} {
+  \BlankLine
+  currentNode $\leftarrow$ $children[0]$\;
+  currentParent $\leftarrow$ \FDequeue{parentQueue}\;
+  parentChildMap $\leftarrow$ parentChildMap + ($currentNode$ : $currentParent$)\;
+  remainder $\leftarrow$ $children[1]$ \KwTo $children[length - 1]$\;
+  \BlankLine  
+  \If {\FIsEmpty{children}} {
+    \KwRet parentChildMap\;
+  }
+  \BlankLine
+  \eIf {\FIsLeaf{currentNode}} {
+    \KwRet \FTraverse{remainder, parentQueue}\;
+  } {
+    currentNodeChildren $\leftarrow$ \FGetChildren{currentNode}\;
+    \lForEach{child $c$ in $currentNodeChildren$}{\FEnqueue{currentNode}} \nllabel{parentQueueUpdate}
+    remainder $\leftarrow$ remainder + currentNodeChildren\;
+    \KwRet \FTraverse{remainder, parentQueue}\;
+  }
+
+}
+\end{algorithm}
+
+Once we have our full parent-child mapping for every node in the tree, we can then recursively go through the map to build a path for every node. First, we need a helper function that recursively builds a path for a given node as shown in Algorithm~\ref{pathQueue}.
+
+\begin{algorithm}[h]
+\label{pathQueue}
+\caption{Get Path of a Given Node}
+\SetKwFunction{FGetPath}{GetPath}
+\SetKwFunction{FEnqueue}{Enqueue}
+\SetKwFunction{FGet}{Get}
+\SetKwProg{Fn}{Function}{:}{}
+\KwIn{pathMap, node, currentPath}
+\KwOut{path}
+\BlankLine
+\Fn {\FGetPath{$pathMap$, node, $currentPath$}} {
+  \BlankLine
+  currentParent $\leftarrow$ \FGet{pathMap, node}\;
+  currentPath $\leftarrow$ currentPath + node\;
+  \eIf {currentParent is null} {
+    \KwRet currentPath\;
+  } {
+    \KwRet \FGetPath{pathMap, node, currentPath}\;
+  }
+}
+\end{algorithm}
+
+Finally, we now have the building blocks to build a full path map from a taxonomy tree as shown in Algorithm~\ref{fullPathMap}. We first traverse the whole tree to build the parent-child map, then for every key in the parent-child map, we get the full path. We then update our $fullPathMap$ with the key being the node, and the value is the reversed path. The reason we reverse the path is as shown in Section~\ref{tdsIntro}, we generalize to the root of the tree. For example, after Algorithm~\ref{fullPathMap} runs, the map for node \emph{9th} in Figure~\ref{taxonomyTree} will look like \{$key$: \emph{9th}, $value$: [\emph{Any, Without-Post-Secondary, Secondary, Junior-Secondary, 9th}]\}. Therefore, getting the root of a node during anonymization is in constant time since the path map is indexed by the node's string value.
+
+\begin{algorithm}[h]
+\label{fullPathMap}
+\caption{Build Path Map from Taxonomy Tree}
+\SetKwFunction{FTraverse}{Traverse}
+\SetKwFunction{FEnqueue}{Enqueue}
+\SetKwFunction{FGetPath}{GetPath}
+\SetKwFunction{FGetChildren}{GetChildren}
+\SetKwFunction{FReverse}{Reverse}
+\KwIn{taxonomyTree}
+\KwOut{fullPathMap}
+\BlankLine
+children $\leftarrow$ \FGetChildren{taxonomyTree}\;
+parentQueue $\leftarrow$ \lForEach{node $n$ in $children$}{\FEnqueue{node}}
+\BlankLine
+parentChildMapping $\leftarrow$ \FTraverse{children, parentQueue}\;
+currentPath $\leftarrow \emptyset$\;
+fullPathMap $\leftarrow \emptyset$\;
+\BlankLine
+\For{$key \in parentChildMapping$}{
+  path $\leftarrow$ \FGetPath{parentChildMapping, key, currentPath}\;
+  fullPathMap $\leftarrow$ fullPathMap + (key: \FReverse{path})\;
+}
+\BlankLine
+\KwRet fullPathMap
+
+\end{algorithm}
 
 \subsection{Main Algorithm}
 
-Pseudo code, discussion
+Once the preprocessing is done, we are now ready to proceed with the actual anonymization algorithm.
 
 \subsection{Performance enhancements}
 
