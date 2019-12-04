@@ -70,7 +70,7 @@ Ottawa, Canada K1S 5B6\\
 % Abstract
 % ############################################################################
 \begin{abstract}
-A very concise summary of the problem addressed and solution presented in this paper.
+This paper provides an implementation of Top-Down Specialization algorithm for data anonymization in parallel using Apache Spark. It evaluates the performance on large datasets up to 20-million rows in a variety of different cluster environments.
 \end{abstract}
 
 
@@ -122,8 +122,6 @@ This paper tackles the scalability of anonymization algorithms for Big Data spec
 % ############################################################################
 \section{Proposed Solution} \label{solution}
 % ############################################################################
-
-This part of the paper is much more free-form. It may have one or several sections and subsections. But it all has only one purpose: to convince the reader that you answered the question or solved the problem that you set for yourself. In this section you will for example present new algorithms you developed and your implementation of these new algorithms.
 
 \subsection{Introduction to $k$-anonymity}
 
@@ -208,38 +206,6 @@ PrivacyLoss(\nu) = |R_\nu| - \min(\{|R_{\nu c}|\})
 \label{privacyLoss}
 \end{equation}
 
-Fung et. al provided an example in \cite{Fung:2005} which helps illustrate the calculations. I include it here for completeness. Using Table~\ref{table2} as our dataset, \emph{SA} in this case is the \emph{Income} attribute. $AC$ element to score is the $Education$ taxonomy tree shown in Figure~\ref{taxonomyTree} with $Any$ at its root. Calculating the score of this particular $AC$ is as follows:
-
-\begin{itemize}
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Any}: \(| R_\nu | = 34\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(>50k\): \(| R_{\nu sv} | = 21\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(\leq50k\): \(| R_{\nu sv} | = 13\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary}: \(| R_{\nu c} | = 16\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary}: \(| R_{\nu c} | = 18\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(>50k\): \(| R_{\nu csv} | = 5\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(\leq50k\): \(| R_{\nu csv} | = 11\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(>50k\): \(| R_{\nu csv} | = 16\)
-  \item Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(\leq50k\): \(| R_{\nu csv} | = 2\)
-  \item Anonymity before specialization is \(| R_\nu | = 34\)
-  \item Anonymity after specialization is \(min(16, 18) = 16\)
-\end{itemize}
-
-Plugging these values in Equations~\ref{score} through \ref{privacyLoss} we get:
-
-\[ I (R_{Any\_Edu}) = (- \frac{21}{34} \times \log_2 \frac{21}{34}) + (- \frac{13}{34} \times \log_2 \frac{13}{34}) = 0.9597 \]
-
-\[ I (R_{Without-Post-Secondary\_Edu}) = (- \frac{5}{16} \times \log_2 \frac{5}{16}) + (- \frac{11}{16} \times \log_2 \frac{11}{16}) = 0.8960 \]
-
-\[ I (R_{Post-Secondary\_Edu}) = (- \frac{16}{18} \times \log_2 \frac{16}{18}) + (- \frac{2}{18} \times \log_2 \frac{2}{18}) = 0.5033 \]
-
-\[ InfoGain(Any\_Edu) = 0.9597 - (\frac{16}{34} \times 0.8960 + \frac{18}{34} \times 0.5033) = 0.2716 \]
-
-\[ PrivacyLoss(Any\_Edu) = 34 - 16 = 18 \]
-
-\[ Score(Any\_Edu) = \frac{0.2716}{18} = 0.151 \]
-
-Once the calculations are done for every tree in $AC$, let's say \emph{Education\_Any} has the highest score, then \emph{Any} is removed from $AC$ set and its subtree rooted at \emph{Without-Post-Secondary} is added along with the subtree rooted at \emph{Post-Secondary} so that the subsequent iteration calculates the score of these two subtrees separately along with the rest of the existing $AC$ set.
-
 \begin{table}[htp]
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|}
@@ -266,15 +232,49 @@ Doctorate & F & 44 & $> \text{50k}$ & 1 \\
 \caption{Calculating best score}
 \end{table}
 
+Fung et. al provided an example in \cite{Fung:2005} which helps illustrate the calculations. I include it here for completeness. Using Table~\ref{table2} as our dataset, \emph{SA} in this case is the \emph{Income} attribute. $AC$ element to score is the $Education$ taxonomy tree shown in Figure~\ref{taxonomyTree} with $Any$ at its root. Calculating the score of this particular $AC$ is shown below:
+
+\begin{table}[htp]
+\begin{adjustbox}{width=\textwidth, center}
+\begin{tabular}{|c|c|c|}
+\hline
+Operand & Description & Value\\
+\hline
+$| R_\nu |$ & Sum of counts of $Education$ attribute when generalized to \emph{Any} & 34\\
+$| R_{\nu sv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(>50k\) & 21\\
+$| R_{\nu sv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Any} and \emph{SA} is \(\leq50k\) & 13\\
+$| R_{\nu c} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} & 16\\
+$| R_{\nu c} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} & 18\\
+$| R_{\nu csv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(>50k\) & 5\\
+$| R_{\nu csv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Without-Post-Secondary} and \emph{SA} is \(\leq50k\) & 11\\
+$| R_{\nu csv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(>50k\) & 16\\
+$| R_{\nu csv} |$ & Sum of counts of $Education$ attribute when generalized to \emph{Post-Secondary} and \emph{SA} is \(\leq50k\) & 2\\
+$| R_\nu |$ & Anonymity before specialization & 34\\
+$min(\{| R_{\nu c} |\})$ & Anonymity after specialization & 16\\
+\hline
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+Plugging these values in Equations~\ref{score} through \ref{privacyLoss} we get:
+
+\[ I (R_{Any\_Edu}) = (- \frac{21}{34} \times \log_2 \frac{21}{34}) + (- \frac{13}{34} \times \log_2 \frac{13}{34}) = 0.9597 \]
+
+\[ I (R_{Without-Post-Secondary\_Edu}) = (- \frac{5}{16} \times \log_2 \frac{5}{16}) + (- \frac{11}{16} \times \log_2 \frac{11}{16}) = 0.8960 \]
+
+\[ I (R_{Post-Secondary\_Edu}) = (- \frac{16}{18} \times \log_2 \frac{16}{18}) + (- \frac{2}{18} \times \log_2 \frac{2}{18}) = 0.5033 \]
+
+\[ InfoGain(Any\_Edu) = 0.9597 - (\frac{16}{34} \times 0.8960 + \frac{18}{34} \times 0.5033) = 0.2716 \]
+
+\[ PrivacyLoss(Any\_Edu) = 34 - 16 = 18 \]
+
+\[ Score(Any\_Edu) = \frac{0.2716}{18} = 0.151 \]
+
+Once the calculations are done for every tree in $AC$, let's say \emph{Education\_Any} has the highest score, then \emph{Any} is removed from $AC$ set and its subtree rooted at \emph{Without-Post-Secondary} is added along with the subtree rooted at \emph{Post-Secondary} so that the subsequent iteration calculates the score of these two subtrees separately along with the rest of the existing $AC$ set.
+
 \subsection{Pre-Processing}
 
-As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterative algorithm that involves using the same dataset multiple times to perform different calculations. This type of algorithms is best suited for Apache Spark\texttrademark~as shown in Section~\ref{literature}.
-
-In order to prepare our dataset for the main algorithm. First we need to remove all non-$QID$ columns from the dataset. We then perform a group by query for \( \{QID\} \cup \{SA\} \) with the count of every group as shown in the example in Table~\ref{table2}.
-
-Since there are multiple iterations that involves traversing the trees in $AC$, we ultimately need to access the tree root in \(\mathcal{O}(1)\) time since this will be performed on every cell in the dataset. Therefore, I present an algorithm that runs during the preprocessing stage to build Path Maps from taxonomy trees.
-
-First, we need to build a parent-child mapping by traversing the taxonomy trees in a breadth-first tail-recursive manner as shown in Algorithm~\ref{parentChildMap}. Tail recursion is a feature in Scala which provides a way to calculate the intermediate results so that the stack does not dramatically increase by function calls as it happens in traditional recursive calls. The $Traverse$ function traverses through every node in the tree. If a node is not a leaf node, it adds the current node to a queue as many times as its number of children. For example, when we are traversing the node $Any$ in Figure~\ref{taxonomyTree}, we see that it has two children, therefore after Line~\ref{parentQueueUpdate}, $parentQueue$ will contain [$Any$, $Any$]. This way, when we traverse \emph{Without-Post-Secondary} and \emph{Post-Secondary} we dequeue $Any$ twice, and $parentChildMap$ will contain two elements: [\{$key$: \emph{Without-Post-Secondary}, $value$: $Any$\}, \{$key$: \emph{Post-Secondary}, $value$: $Any$\}]
+As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterative algorithm that involves using the same dataset multiple times to perform different calculations. This type of algorithms is best suited for Apache Spark\texttrademark~as shown in Section~\ref{literature}. Spark is a fast and general-purpose cluster computing system that performs its computations in memory by default.
 
 \begin{algorithm}[h]
 \label{parentChildMap}
@@ -297,6 +297,7 @@ First, we need to build a parent-child mapping by traversing the taxonomy trees 
   remainder $\leftarrow$ $children[1]$ \KwTo $children[length - 1]$\;
   \BlankLine  
   \If {\FIsEmpty{children}} {
+    \tcc{No more children to traverse, we are done}
     \KwRet parentChildMap\;
   }
   \BlankLine
@@ -312,7 +313,11 @@ First, we need to build a parent-child mapping by traversing the taxonomy trees 
 }
 \end{algorithm}
 
-Once we have our full parent-child mapping for every node in the tree, we can then recursively build the full path for a given node as shown in Algorithm~\ref{pathQueue}. 
+In order to prepare our dataset for the main algorithm. First we need to remove all non-$QID$ columns from the dataset. We then perform a group by query for \( \{QID\} \cup \{SA\} \) with the count of every group as shown in the example in Table~\ref{table2}.
+
+Since there are multiple iterations that involve generalizing values to the root of the trees in $AC$, we ultimately need to access the cell value's root in \(\mathcal{O}(1)\) time since this will be performed on every cell in the dataset. Therefore, I present an algorithm that runs during the preprocessing stage to build path maps from taxonomy trees.
+
+First, we need to build a parent-child mapping by traversing the taxonomy trees in its entirety in a breadth-first tail-recursive manner as shown in Algorithm~\ref{parentChildMap}. The Top-Down Specialization algorithm implemented for this paper is in Scala since it is the native language of Spark. Tail recursion is a feature in Scala which provides a way to calculate the intermediate results so that the stack does not dramatically increase in size by function calls as it happens in traditional recursive algorithms. The $Traverse$ function traverses through every node in the tree. If a node is not a leaf node, it adds the current node to a queue as many times as its number of children. For example, when we are traversing the node $Any$ in Figure~\ref{taxonomyTree}, we see that it has two children, therefore after Line~\ref{parentQueueUpdate}, $parentQueue$ will contain [$Any$, $Any$]. This way, when we traverse \emph{Without-Post-Secondary} and \emph{Post-Secondary} we dequeue $Any$ twice, and $parentChildMap$ will contain two elements: [\{$key$: \emph{Without-Post-Secondary}, $value$: $Any$\}, \{$key$: \emph{Post-Secondary}, $value$: $Any$\}]
 
 \begin{algorithm}[h]
 \label{pathQueue}
@@ -336,7 +341,7 @@ Once we have our full parent-child mapping for every node in the tree, we can th
 }
 \end{algorithm}
 
-Finally, we now have the building blocks to build a full path map from a taxonomy tree as shown in Algorithm~\ref{fullPathMap}. We first traverse the whole tree to build the parent-child map, then for every key in the parent-child map, we get the full path. We then update our $fullPathMap$ with the node as the key and the reversed path as the value. The reason we reverse the path is as shown in Section~\ref{tdsIntro}, we generalize to the root of the tree. For example, after Algorithm~\ref{fullPathMap} runs, the map for node \emph{9th} in Figure~\ref{taxonomyTree} will look like \{$key$: \emph{9th}, $value$: [\emph{Any, Without-Post-Secondary, Secondary, Junior-Secondary, 9th}]\}. Therefore, getting the root of a node during anonymization is in constant time since the path map is indexed by the node's string value.
+Once we have our full parent-child mapping for every node in the tree, we can then tail-recursively build the full path for a given node as shown in Algorithm~\ref{pathQueue}. 
 
 \begin{algorithm}[h]
 \label{fullPathMap}
@@ -365,47 +370,11 @@ fullPathMap $\leftarrow \emptyset$\;
 
 \end{algorithm}
 
+Finally, we now have the building blocks to build a full path map from a taxonomy tree as shown in Algorithm~\ref{fullPathMap}. We first traverse the whole tree to build the parent-child map, then for every key in the parent-child map, we get the full path. We then update our $fullPathMap$ with the node as the key and the reversed path as the value. The reason we reverse the path is that we need to generalize to the root of the tree. For example, after Algorithm~\ref{fullPathMap} runs, the map for node \emph{9th} in Figure~\ref{taxonomyTree} will look like \{$key$: \emph{9th}, $value$: [\emph{Any, Without-Post-Secondary, Secondary, Junior-Secondary, 9th}]\}. Therefore, getting the root of a node during anonymization is in constant time since the path map is indexed by the node's string value.
+
 \subsection{Main Algorithm}
 
-Once the preprocessing is done, we are now ready to proceed with the actual anonymization. We start by partitioning the preprocessed dataset into multiple partitions. For every partition, we transform the dataset by creating a column for every operand required in the score calculation equations presented in Equation~\ref{score} through \ref{privacyLoss} in Section~\ref{tdsIntro}. For example, we transform Table~\ref{table2} to Table~\ref{table3} shown below. The \_Y and \_N prefixes denote those with \(SA > 50k\) and \(SA \leq 50k\) respectively. The \_WPS prefix denotes count of values that get generalized to Without-Post-Secondary node and \_PS for Post-Secondary. This transformation is done for all $QID$ in parallel however due to the large width of the resulting dataset I show the example for \emph{Education} attribute only.
-
-\begin{table}[htp]
-\begin{adjustbox}{width=\textwidth, center}
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
-\hline
-Edu & Edu\_Gen & Edu\_Child\_Gen & Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_WPS\_N & Edu\_PS\_Y & Edu\_PS\_N\\
-\hline
-9th & Any & WPS & 3 & 0 & 3 & 3 & 0 & 0 & 3 & 0 & 0\\
-10th & Any & WPS & 4 & 0 & 4 & 4 & 0 & 0 & 4 & 0 & 0\\
-11th & Any & WPS & 5 & 2 & 3 & 5 & 0 & 2 & 3 & 0 & 0\\
-12th & Any & WPS & 4 & 3 & 1 & 4 & 0 & 3 & 1 & 0 & 0\\
-Bachelors & Any & PS & 6 & 4 & 2 & 0 & 6 & 0 & 0 & 4 & 2\\
-Bachelors & Any & PS & 4 & 4 & 0 & 0 & 4 & 0 & 0 & 4 & 0\\
-Masters & Any & PS & 4 & 4 & 0 & 0 & 4 & 0 & 0 & 4 & 0\\
-Masters & Any & PS & 3 & 3 & 0 & 0 & 3 & 0 & 0 & 3 & 0\\
-Doctorate & Any & PS & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0\\
-\hline
-\end{tabular}
-\end{adjustbox}
-\caption{Education Transformation}
-\label{table3}
-\end{table}
-
-Once we have all the transformations we need, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs those aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then get stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring Anonymization Cut tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added. The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented}
-
-\begin{table}[htp]
-\begin{adjustbox}{width=\textwidth, center}
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
-\hline
-Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_WPS\_N & Edu\_PS\_Y & Edu\_PS\_N\\
-\hline
-34 & 21 & 13 & 16 & 18 & 5 & 11 & 16 & 2\\
-\hline
-\end{tabular}
-\end{adjustbox}
-\caption{Education Aggregation}
-\label{table4}
-\end{table}
+Once the preprocessing is done, we are now ready to proceed with the actual anonymization. We start by partitioning the preprocessed dataset into multiple partitions as shown in Figure~\ref{partitioning}. For every partition, we transform the dataset by creating a column for every operand required in the score calculation equations presented in Equation~\ref{score} through \ref{privacyLoss} in Section~\ref{tdsIntro}. For example, we transform Table~\ref{table2} to Table~\ref{table3} shown below. The columns with \_Y and \_N prefixes represent those with \(SA > 50k\) and \(SA \leq 50k\) respectively. The \_WPS prefix represents count of values that get generalized to Without-Post-Secondary node and \_PS for Post-Secondary. This transformation is done for all $QID$ on all worker nodes in parallel however due to the large width of the resulting dataset I show the example for \emph{Education} attribute only.
 
 \begin{algorithm}[h]
 \label{tdsImplemented}
@@ -436,19 +405,148 @@ Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_W
   }
   \uElseIf {$kCurrent < k$} {
     \tcc{violated k, return map before generalization}
-    \KwRet originalPathMap\;
+    \KwRet originalPathMap\; \nllabel{originalPathMap}
   }
   \Else{
-    \KwRet newMap\;
+    \KwRet newMap\; \nllabel{newMap}
   }
 }
 
 \end{algorithm}
 
+\begin{figure}[htp]
+\centering
+\tikzset{every picture/.style={line width=0.75pt}}
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+\draw   (290.5,47.87) .. controls (290.5,43.34) and (294.17,39.67) .. (298.7,39.67) -- (382.3,39.67) .. controls (386.83,39.67) and (390.5,43.34) .. (390.5,47.87) -- (390.5,72.47) .. controls (390.5,77) and (386.83,80.67) .. (382.3,80.67) -- (298.7,80.67) .. controls (294.17,80.67) and (290.5,77) .. (290.5,72.47) -- cycle ;
+\draw    (340.5,80.67) -- (340.17,121) ;
+
+\draw    (200.17,120.67) -- (480.17,121.33) ;
+\draw    (200.17,120.67) -- (200.48,157.67) ;
+\draw [shift={(200.5,159.67)}, rotate = 269.52] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (240.5,121) -- (240.5,157.67) ;
+\draw [shift={(240.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (280.5,121) -- (280.5,157.67) ;
+\draw [shift={(280.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (320.5,121) -- (320.5,156.67) ;
+\draw [shift={(320.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (360.5,121) -- (360.5,157.67) ;
+\draw [shift={(360.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (400.5,121) -- (400.5,156.67) ;
+\draw [shift={(400.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (440.5,121) -- (440.5,156.67) ;
+\draw [shift={(440.5,159.67)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (480.17,121) -- (480.47,156.67) ;
+\draw [shift={(480.5,159.67)}, rotate = 269.5] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+
+%1
+\draw   (190,169.17) .. controls (190,165.37) and (194.7,159.67) .. (200.5,159.67) -- (200.5,159.67) .. controls (206.3,159.67) and (211,164.37) .. (211,170.17) -- (211,189.17) .. controls (211,194.97) and (206.3,199.67) .. (200.5,199.67) -- (200.5,199.67) .. controls (194.7,199.67) and (190,194.97) .. (190,189.17) -- cycle ;
+%2
+\draw   (230,170.17) .. controls (230,165.37) and (234.7,159.67) .. (240.5,159.67) -- (240.5,159.67) .. controls (246.3,159.67) and (251,164.37) .. (251,170.17) -- (251,189.17) .. controls (251,194.97) and (246.3,199.67) .. (240.5,199.67) -- (240.5,199.67) .. controls (234.7,199.67) and (230,194.97) .. (230,189.17) -- cycle ;
+%3
+\draw   (270,170.17) .. controls (270,165.37) and (274.7,159.67) .. (280.5,159.67) -- (280.5,159.67) .. controls (286.3,159.67) and (291,164.37) .. (291,170.17) -- (291,189.17) .. controls (291,194.97) and (286.3,199.67) .. (280.5,199.67) -- (280.5,199.67) .. controls (274.7,199.67) and (270,194.97) .. (270,189.17) -- cycle ;
+%4
+\draw   (310,170.17) .. controls (310,165.37) and (314.7,159.67) .. (320.5,159.67) -- (320.5,159.67) .. controls (326.3,159.67) and (331,164.37) .. (331,170.17) -- (331,189.17) .. controls (331,194.97) and (326.3,199.67) .. (320.5,199.67) -- (320.5,199.67) .. controls (314.7,199.67) and (310,194.97) .. (310,189.17) -- cycle ;
+%5%
+\draw   (350,170.17) .. controls (350,165.37) and (354.7,159.67) .. (360.5,159.67) -- (360.5,159.67) .. controls (366.3,159.67) and (371,164.37) .. (371,170.17) -- (371,189.17) .. controls (371,194.97) and (366.3,199.67) .. (360.5,199.67) -- (360.5,199.67) .. controls (354.7,199.67) and (350,194.97) .. (350,189.17) -- cycle ;
+%6
+\draw   (390,170.17) .. controls (390,165.37) and (394.7,159.67) .. (400.5,159.67) -- (400.5,159.67) .. controls (406.3,159.67) and (411,164.37) .. (411,170.17) -- (411,189.17) .. controls (411,194.97) and (406.3,199.67) .. (400.5,199.67) -- (400.5,199.67) .. controls (394.7,199.67) and (390,194.97) .. (390,189.17) -- cycle ;
+%7
+\draw   (430,170.17) .. controls (430,165.37) and (434.7,159.67) .. (440.5,159.67) -- (440.5,159.67) .. controls (446.3,159.67) and (451,164.37) .. (451,170.17) -- (451,189.17) .. controls (451,194.97) and (446.3,199.67) .. (440.5,199.67) -- (440.5,199.67) .. controls (434.7,199.67) and (430,194.97) .. (430,189.17) -- cycle ;
+%n
+\draw   (470,170.17) .. controls (470,165.37) and (474.7,159.67) .. (480.5,159.67) -- (480.5,159.67) .. controls (486.3,159.67) and (491,164.37) .. (491,170.17) -- (491,189.17) .. controls (491,194.97) and (486.3,199.67) .. (480.5,199.67) -- (480.5,199.67) .. controls (474.7,199.67) and (470,194.97) .. (470,189.17) -- cycle ;
+
+\draw    (200.5,220) -- (200.5,200) ;
+\draw    (240.5,220) -- (240.5,200) ;
+\draw    (280.5,220) -- (280.5,200) ;
+\draw    (320.5,220) -- (320.5,200) ;
+\draw    (360.5,220) -- (360.5,200) ;
+\draw    (400.5,220) -- (400.5,200) ;
+\draw    (440.5,220) -- (440.5,200) ;
+\draw    (480.5,220) -- (480.5,200) ;
+\draw    (179.83,220) -- (500.83,220) ;
+\draw    (179.83,220) -- (180.14,257) ;
+\draw [shift={(180.17,260)}, rotate = 269.52] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw    (500.83,220) -- (501.14,257) ;
+\draw [shift={(501.17,260)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+\draw   (171.97,268.2) .. controls (171.97,263.67) and (175.64,260) .. (180.17,260) -- (501.41,260) .. controls (505.94,260) and (509.61,263.67) .. (509.61,268.2) -- (509.61,292.8) .. controls (509.61,297.33) and (505.94,301) .. (501.41,301) -- (180.17,301) .. controls (175.64,301) and (171.97,297.33) .. (171.97,292.8) -- cycle ;
+\draw (200.5,180.67) node   {$p_{1}$};
+\draw (240.5,180.67) node   {$p_{2}$};
+\draw (280.5,180.67) node   {$p_{3}$};
+\draw (320.5,180.67) node   {$p_{4}$};
+\draw (360.5,180.67) node   {$p_{5}$};
+\draw (400.5,180.67) node   {$p_{6}$};
+\draw (440.5,180.67) node   {$p_{7}$};
+\draw (480.5,180.67) node   {$p_{n}$};
+\draw (340.5,60.17) node  [align=center] {Preprocessed\\dataset};
+\draw (340.79,280.5) node  [align=center] {Total aggregates collected};
+\end{tikzpicture}
+\caption{Performing Aggregations on Spark}
+\label{partitioning}
+\end{figure}
+
+\begin{table}[htp]
+\begin{adjustbox}{width=\textwidth, center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+Edu & Edu\_Gen & Edu\_Child\_Gen & Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_WPS\_N & Edu\_PS\_Y & Edu\_PS\_N\\
+\hline
+9th & Any & WPS & 3 & 0 & 3 & 3 & 0 & 0 & 3 & 0 & 0\\
+10th & Any & WPS & 4 & 0 & 4 & 4 & 0 & 0 & 4 & 0 & 0\\
+11th & Any & WPS & 5 & 2 & 3 & 5 & 0 & 2 & 3 & 0 & 0\\
+12th & Any & WPS & 4 & 3 & 1 & 4 & 0 & 3 & 1 & 0 & 0\\
+Bachelors & Any & PS & 6 & 4 & 2 & 0 & 6 & 0 & 0 & 4 & 2\\
+Bachelors & Any & PS & 4 & 4 & 0 & 0 & 4 & 0 & 0 & 4 & 0\\
+Masters & Any & PS & 4 & 4 & 0 & 0 & 4 & 0 & 0 & 4 & 0\\
+Masters & Any & PS & 3 & 3 & 0 & 0 & 3 & 0 & 0 & 3 & 0\\
+Doctorate & Any & PS & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0\\
+\hline
+\end{tabular}
+\end{adjustbox}
+\caption{Education Transformation}
+\label{table3}
+\end{table}
+
+Once we have all the transformations, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs those aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then gets stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring Anonymization Cut tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added. The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented}.
+
+\begin{table}[htp]
+\begin{adjustbox}{width=\textwidth, center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_WPS\_N & Edu\_PS\_Y & Edu\_PS\_N\\
+\hline
+34 & 21 & 13 & 16 & 18 & 5 & 11 & 16 & 2\\
+\hline
+\end{tabular}
+\end{adjustbox}
+\caption{Education Aggregation}
+\label{table4}
+\end{table}
+
+The path map that gets returned from the Algorithm~\ref{tdsImplemented} Line~\ref{originalPathMap} or \ref{newMap} once it is done can be as follows:
+
+\begin{verbatim}
+education:
+    Map(
+        7th-8th: Queue(Elementary, 7th-8th),
+        Bachelors: Queue(University, Bachelors),
+        ...
+    ),
+native-country:
+    Map(
+        Vietnam: Queue(Asia, Southeastern-Asia, Vietnam),
+        ...
+    ),
+...
+\end{verbatim}
+
+This anonymization map can then be passed to a Spark User Defined Function (UDF) that gets executed on every cell. For education column it will generalize \emph{7th-8th} values to \emph{Elementary} and \emph{Bachelors} to \emph{University}. For native country column, \emph{Vietnam} values will be generalized to \emph{Asia}
 
 \subsection{Performance enhancements}
 
-Performance enhancements, partitioning, having one aggregation per iteration
+Multiple considerations have been taken into account in order to improve performance. The first was generating path maps from taxonomy trees in the preprocessing step in order to speed up tree lookups performed during generalization. I also had to perform multiple experiments with a variety of different partition numbers in order to achieve the best performance. The best performance was achieved when number of partitions was set to total number of cores in the cluster. This finding corroborates findings of \cite{Sopaoglu:2017}. Tail recursion was also preferred over looping as a performance enhancement technique. Dataset was also partitioned over an arbitrary unique $rowId$ assigned to every row in the preprocessing stage. When partitioning is left completely up to Spark by only providing the number of partitions, it was found that this does not guarantee an equally distributed number of partitions across all worker nodes. An even distribution was achieved by partitioning over a unique ID column as well as providing the number of partitions.
+
+Lastly, the biggest improvement enhancement was achieved by performing the aggregations of all taxonomy trees at once, in parallel, and then collecting the total aggregates to a local variable. The brute-force attempt of the implementation was only performing the aggregations of individual $QID$s in parallel and then collecting aggregates for each $QID$ separately. By doing all aggregations of all taxonomy trees in parallel, which essentially reduced aggregations to only one per iteration, runtime was reduced from 4 hours to 15 minute on a 5-million row dataset in an 8-node cluster. In Section~\ref{evaluation} I review those performance results in detail.
 
 % usage: \includeFig{label}{file}{caption}
 
@@ -456,53 +554,272 @@ Performance enhancements, partitioning, having one aggregation per iteration
 \section{Experimental Evaluation} \label{evaluation}
 % ############################################################################
 
-This section is not mandatory for all papers (for example theory papers) but typically required for papers in the field of parallel computing. After all, parallel computing is all about compute performance. Here you present performance data obtained from e.g. running your newly developed algorithms and code on a parallel machine using some benchmark input data. Typically, you need to describe the parallel machine you used and the data that you used as input. The main results are usually performance graphs, typically speedup curves. You want to evaluate your code on different input data sets highlighting the strengths and weaknesses of your code. Don’t just use best case scenarios. People will call you on that. Discuss the results obtained.
+Experiments were performed on an OpenStack cluster with 1, 2, 4, 8 and 16 worker nodes. Each node had 4 vCPUs, 8 GB RAM and 32 GB disk size. All nodes were running Spark version 2.4.2, Scala 12.10 and Java 8. The dataset used is the same \emph{Adult} dataset referenced in \cite{Sopaoglu:2017} however it was enlarged to 4 different datasets of 250,000, 5 million, 10 million and 20 million datasets. The enlargement process involved writing a script to inject rows using a random value from the list of distinct values in the original dataset for every column.
 
+A total of 8 $QID$ values were specified. All were categorical attributes: $education$, $marital\_status$, $occupation$, $native\_country$, $workclass$, $relationship$, $race$, $sex$. The $k$ value was set to 100.
 
+The first experiment was determining the number of partitions. Using a 5 million dataset and running on an 8-node cluster, the following variations were tested for number of partitions: 16, 32 (total number of vCPUs in the cluster), 50, 100, 200 (Spark's default number of partitions), 300, 400 and 528. As shown in Figure~\ref{bestPartition}, the best performance was when number of partitions set to the number of total vCPUs in the cluster which performed 1.5 faster than the Spark default. The dashed vertical line represents the best performing and the dotted represents Spark's default. The most likely explanation for this is that when partition numbers are fewer than number of CPUs, not all cores are utilized. While when the number of partitions is much higher than number of cores, the partitioned dataset becomes too small to the point that the overhead of partitioning exceeds the time it takes to execute the task itself.
+
+\begin{figure}[htp]
+\centering
 \begin{tikzpicture}
 \begin{axis}[
-    title={20-million row speedup},
+    xlabel={Partitions},
+    ylabel={Time (ms)},
+    xmin=0, xmax=528,
+    ymin=0, ymax=2000000,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(16,1258976)(32,1040411)(50,1315358)(100,1384842)(200,1521808)(300,1651312)(400,1688017)(528,1914883)};
+
+\draw [dashed] (32,0) -- (32,165);
+\draw [dotted] (200,0) -- (200,165);
+
+\legend{time}
+\end{axis}
+\end{tikzpicture}
+\caption{Determining Best Number of Partitions}
+\label{bestPartition}
+\end{figure}
+
+The following experiment evaluated the scale-up of Top-Down Specialization on Spark shown in Figure~\ref{scaleUp}. Running 4 different datasets on a 16-node cluster and 64 partitions, we can see that when the dataset size increases by 100\% from 5 to 10 to 20 million, the runtime only increases by 55-65\%
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ymin=0, ymax=25000000,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(5000000,901938)(10000000,1486063)(20000000,2305491)};
+
+\addplot[color=orange,mark=round]
+coordinates {(5000000,5000000)(10000000,10000000)(20000000,20000000)};
+
+\legend{time, number of records}
+\end{axis}
+\end{tikzpicture}
+\caption{Scale-up of TDS on Spark}
+\label{scaleUp}
+\end{figure}
+
+We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger. This is most likely also attributable to the partitioning overhead exceeding the task computation effort for small datasets mentioned before. 
+
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={250,000 rows},
     xlabel={Nodes},
-    ylabel={Time (min)},
-    xmin=0, xmax=16,
-    ymin=0, ymax=600,
-    xtick={0, 1,2,4,8,16},
-    ytick={0, 100, 200, 300, 400, 500, 600},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=9881.125, ymax=158098,
     legend pos=north west,
     grid style=dashed,
     style=thick
 ]
 
 \addplot[color=orange,mark=round]
-coordinates {(1,489)(2,250)(4,134)(8,72)(16,38)};
+coordinates {(1,158098)(2,129070)(4,130564)(8,97207)(16,95352)};
 
 \addplot[color=darkGreen,mark=round]
-coordinates {(1,489)(2,244)(4,122)(8,61)(16,31)};
+coordinates {(1,158098)(2,79049)(4,39525)(8,19762)(16,9881)};
 
 \legend{actual, optimal}
 \end{axis}
 \end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={5 million rows},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=278111, ymax=4449781,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,4449781)(2,2546598)(4,1573823)(8,1040411)(16,901938)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\end{center}
 
 
-% usage: \includeFig{label}{file}{caption}
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={10 million rows},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=857689, ymax=13723016,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,13723016)(2,7174442)(4,3871286)(8,2103755)(16,1486063)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={20 million rows},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=1833101, ymax=29329618,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,29329618)(2,15007906)(4,8041695)(8,4323788)(16,2305491)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,29329618)(2,14664809)(4,7332405)(8,3666202)(16,1833101)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+In comparison with the original paper \cite{Sopaoglu:2017}, we can see that their speedup was slightly better for 5-million row dataset. Please note that \cite{Sopaoglu:2017} used size on disk for measurement which was equivalent to this paper's 5-million row dataset. Please also note that the test environment used in the original paper was slightly different as the authors installed Spark on Docker contains on the same 32-core machine. It is presumed that the communication between Docker images on the same machine will not have the communication overhead between workers in a cluster where this paper's implementation was tested.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={Original paper, 500 MB},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=265625, ymax=4250000,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,4250000)(2,2000000)(4,1250000)(8,750000)(16,500000)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,4250000)(2,2125000)(4,1062500)(8,531250)(16,265625)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={This paper, 5-million rows},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=278111, ymax=4449781,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,4449781)(2,2546598)(4,1573823)(8,1040411)(16,901938)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+Finally, another test was performed on a 32-core machine and 128 GB RAM for the 10-million row dataset. As shown, the 10-million row running on a cluster had a much better speedup compared to the same dataset running in a 32-core machine. The most likely reason for this is as the dataset increases, the bus communication traffic becomes congested which serves as a bottleneck not present in a cluster environment. Spark documentation also shows that running locally on the same machine is meant for testing only and some out-of-the-box Spark performance enhancements only available for cluster environments.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={10 million rows on a cluster},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=16,
+    ymin=857689, ymax=13723016,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,13723016)(2,7174442)(4,3871286)(8,2103755)(16,1486063)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale=0.8]
+\begin{axis}[
+    title={10 million rows on 32-core local},
+    xlabel={Nodes},
+    ylabel={Time (ms)},
+    xmin=1, xmax=32,
+    ymin=586845, ymax=18779043,
+    legend pos=north west,
+    grid style=dashed,
+    style=thick
+]
+
+\addplot[color=orange,mark=round]
+coordinates {(1,18779043)(2,10458207)(4,5681087)(8,3670931)(16,3688598)(32,3315245)};
+
+\addplot[color=darkGreen,mark=round]
+coordinates {(1,18779043)(2,9389522)(4,4694761)(8,2347380)(16,1173690)(32,586845)};
+
+\legend{actual, optimal}
+\end{axis}
+\end{tikzpicture}
+\end{center}
 
 % ############################################################################
 \section{Conclusions} \label{conclusion}
 % ############################################################################
 
-You generally cover three things in the Conclusions section.
-\begin{enumerate}
-\item Conclusions
-\item Summary of Contributions
-\item Future Research
-\end{enumerate}
+Based on experiments conducted in Section~\ref{evaluation}, I can conclude the following:
 
-Conclusions are not a rambling summary of the thesis: they are short, concise statements of the inferences that you have made because of your work. All conclusions should be directly related to the research question.
+\subsection{Conclusions}
 
-The Summary of Contributions will be much sought and carefully read by the readers. Here you list the contributions of new knowledge that your paper makes. Of course, the paper itself must substantiate any claims made here. There is often some overlap with the Conclusions, but that’s okay.
+This paper's implementation had speedups close to optimal for larger datasets of 20-million rows. The scale up curve was also close to linear when dataset size doubled, runtime only increased by half. In order to achieve the best performance, Spark partitions need to equal total number of cores in a cluster. Top-Down Specialization on Spark also performed better in a cluster environment compared to local machines even when locally the cores were more powerful than on the cluster. For iterative algorithms, minimizing the number of aggregations and collection from worker nodes to only one yields the best performance results. Even when the aggregations are performed on wide tables of $\approx$100 columns.
 
-The Future Research should indicate interesting new problems arising from your work. No paper ever solves everything. In fact, the best research papers lead to new research questions for other researchers to work on.
+\subsection{Summary of Contributions}
 
+This paper enhanced the preprocessing stage by implementing an algorithm that built path maps from taxonomy trees. This provided the option of performing look-ups in constant time during the iterations. It also evaluated the performance of Top-Down Specialization algorithm on Spark on datasets up to 4-times larger than tested in \cite{Sopaoglu:2017}. Evaluations of the algorithm were also made in a cluster environment which is more typical for production applications.
+
+\subsection{Future Research}
+
+The Top-Down Specialization algorithm starts by generalizing all values to the root of taxonomy trees. This introduces redundant iterations for larger datasets as it will iterate all the way from \(k=n\) where $n$ is the number of records to a much lower number such as \(k=100\) performed in this paper's experiments. Future research can enhance algorithms such as Hybrid Top-Down and Bottom-Up algorithm proposed in \cite{Zhang:2013} by adapting it for Spark. It is also worth researching starting the generalization at a level deeper than the root to avoid these redundant iterations. 
 
 % ############################################################################
 % Bibliography
