@@ -161,8 +161,8 @@ Bachelor's & Male & Ottawa & \$50,000 \\
 \hline
 \end{tabular}
 \end{center}
-\label{table1}
 \caption{Dataset violating $k$-anonymity}
+\label{table1}
 \end{table}
 
 Figure~\ref{taxonomyTree} represents a taxonomy tree for \emph{Education} column. The leaf nodes in the tree represent the distinct values present in the dataset. Taxonomy trees are provided by either the data provider or the data recipient for all $QID$ in the dataset. The root node of all taxonomy trees is \emph{Any}.
@@ -180,7 +180,7 @@ for tree={rectangle, edge={->,>=latex}, draw, align=center}
 
 \subsection{Introduction to Top Down Specialization} \label{tdsIntro}
 
-Top Down Specialization algorithm begins by removing all non $QID$s from the dataset. The resulting dataset is then grouped by $QID$ and $SA$ and the count is calculated for every group. A set of trees called Anonymization Cuts \{$AC$\} is created where it initially contains the taxonomy trees of all $QID$. The $AC$ represents the level of the taxonomy tree to which each $QID$ value will be generalized. The algorithm starts with generalizing all values to the root of the corresponding $AC$. The basic idea of the algorithm is that it starts from the top of the taxonomy tree and specializes the values until $k$ is violated. However, it does not simply specialize all attributes. It calculates a score for every $AC$ and only specializes the $AC$ with the highest score. The score which is shown in Equation~\ref{score} calculates the information gain per privacy loss for every $AC$. In other words, which $AC$ will provide the best information gain and the least privacy loss. Information gain involves counting all the values that get generalized to the $AC$'s root (\(|R_\nu|\)), the count of all values that get generalized to the $AC$'s root's children (\(|R_{\nu c}|\)), the count of all values that get generalized to the root for each value in \{$SA$\} and finally the count of all values that get generalized to $AC$'s root's children for each value in \{$SA$\}. The whole equation is shown in Equation~\ref{infoGain} below. The privacy loss involves calculating $k$ before specialization minus $k$ after specialization. The reason for this is that as we specialize values along the $AC$ trees, the data becomes more useful yet less private. The privacy loss equation is shown in Equation~\ref{privacyLoss}. Once the score is calculated, the root $AC$ with the highest score is removed from \{$AC$\} and its children are added as separate trees to the set of \{$AC$\}. That is, $AC$ tree is specialized one level lower. The algorithm re-iterates with the new set of \{$AC$\} until $k$ is violated. The values in the dataset are finally generalized to the root of the final \{$AC$\} set and that represents the anonymized dataset.
+Top Down Specialization algorithm begins by removing all non $QID$s from the dataset. The resulting dataset is then grouped by $QID$ and $SA$ and the count is calculated for every group. A set of trees called Anonymization Cuts \{$AC$\} is created where it initially contains the taxonomy trees of all $QID$. The $AC$ represents the level of the taxonomy tree to which each $QID$ value will be generalized. The algorithm starts with generalizing all values to the root of the corresponding $AC$. The basic idea of the algorithm is that it starts from the top of the taxonomy tree and specializes the values until $k$ is violated. However, it does not simply specialize all attributes. It calculates a score for every $AC$ and only specializes the $AC$ with the highest score. The score which is shown in Equation~\ref{score} calculates the information gain per privacy loss for every $AC$. In other words, which $AC$ will provide the best information gain and the least privacy loss. Information gain involves calculating the entropy as well as counting all the values that get generalized to the $AC$'s root (\(|R_\nu|\)), the count of all values that get generalized to the $AC$'s root's children (\(|R_{\nu c}|\)), the count of all values that get generalized to the root for each value in \{$SA$\} and finally the count of all values that get generalized to $AC$'s root's children for each value in \{$SA$\}. The whole equation is shown in Equation~\ref{infoGain} below. The privacy loss involves calculating $k$ before specialization minus $k$ after specialization. The reason for this is that as we specialize values along the $AC$ trees, the data becomes more useful yet less private. The privacy loss equation is shown in Equation~\ref{privacyLoss}. Once the score is calculated, the root $AC$ with the highest score is removed from \{$AC$\} and its children are added as separate trees to the set of \{$AC$\}. That is, $AC$ tree is specialized one level lower. The algorithm re-iterates with the new set of \{$AC$\} until $k$ is violated. The values in the dataset are finally generalized to the root of the final \{$AC$\} set and that represents the anonymized dataset.
 
 \begin{equation}
 Score(\nu) = \begin{cases}
@@ -227,8 +227,8 @@ Doctorate & F & 44 & $> \text{50k}$ & 1 \\
 \hline
 \end{tabular}
 \end{center}
-\label{table2}
 \caption{Calculating best score}
+\label{table2}
 \end{table}
 
 Fung et. al provided an example in \cite{Fung:2005} which helps illustrate the calculations. I include it here for completeness. Using Table~\ref{table2} as our dataset, \emph{SA} in this case is the \emph{Income} attribute. $AC$ element to score is the $Education$ taxonomy tree shown in Figure~\ref{taxonomyTree} with $Any$ at its root. Calculating the score of this particular $AC$ is shown below:
@@ -506,7 +506,7 @@ Doctorate & Any & PS & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0\\
 \label{table3}
 \end{table}
 
-Once we have all the transformations, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs these aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then gets stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring Anonymization Cut tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added. The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented}.
+Once we have all the transformations, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs these aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then gets stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring $AC$ (Anonymization Cut) tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added. The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented} above.
 
 \begin{table}[htp]
 \begin{adjustbox}{width=\textwidth, center}
@@ -522,7 +522,7 @@ Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_W
 \label{table4}
 \end{table}
 
-The path map that gets returned from the Algorithm~\ref{tdsImplemented} Line~\ref{originalPathMap} or \ref{newMap} once it is done can be as follows:
+The path map that gets returned from Algorithm~\ref{tdsImplemented} Line~\ref{originalPathMap} or \ref{newMap} once it is done can be as follows:
 
 \begin{verbatim}
 education:
@@ -545,7 +545,7 @@ This anonymization map can then be passed to a Spark User Defined Function (UDF)
 
 Multiple considerations have been taken into account in order to improve performance. The first was generating path maps from taxonomy trees in the preprocessing step in order to speed up tree lookups performed during generalization. I also had to perform multiple experiments with a variety of different partition numbers in order to achieve the best performance. The best performance was achieved when number of partitions was set to total number of cores in the cluster. This finding corroborates findings of \cite{Sopaoglu:2017}. Tail recursion was also preferred over looping as a performance enhancement technique. Dataset was also partitioned over an arbitrary unique $rowId$ assigned to every row in the preprocessing stage. When partitioning is left completely up to Spark by only providing the number of partitions, it was found that this does not guarantee an equally distributed number of partitions across all worker nodes. An even distribution was achieved by partitioning over a unique ID column as well as providing the number of partitions.
 
-Lastly, the biggest improvement enhancement was achieved by performing the aggregations of all taxonomy trees at once, in parallel, and then collecting the total aggregates to a local variable. The brute-force attempt of the implementation was only performing the aggregations of individual $QID$s in parallel and then collecting aggregates for each $QID$ separately. By doing all aggregations of all taxonomy trees in parallel, which essentially reduced aggregations to only one per iteration, runtime was reduced from 4 hours to 15 minutes on a 5-million row dataset in an 8-node cluster. In Section~\ref{evaluation} I review those performance results in detail.
+Lastly, the biggest improvement enhancement was achieved by performing the aggregations of all taxonomy trees at once, in parallel, and then collecting the total aggregates to a local variable. The brute-force attempt of the implementation was only performing the aggregations of individual $QID$s in parallel and then collecting aggregates for each $QID$ separately. By doing all aggregations of all taxonomy trees in parallel, which essentially reduced aggregations and collect calls to only one per iteration, runtime was reduced from 4 hours to 15 minutes on a 5-million row dataset in an 8-node cluster. In Section~\ref{evaluation} I review those performance results in detail.
 
 % usage: \includeFig{label}{file}{caption}
 
@@ -572,7 +572,7 @@ The first experiment was determining the number of partitions. Using a 5 million
     style=thick
 ]
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(16,1258976)(32,1040411)(50,1315358)(100,1384842)(200,1521808)(300,1651312)(400,1688017)(528,1914883)};
 
 \draw [dashed] (32,0) -- (32,165);
@@ -597,10 +597,10 @@ The following experiment evaluated the scale-up of Top-Down Specialization on Sp
     style=thick
 ]
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(5000000,901938)(10000000,1486063)(20000000,2305491)};
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(5000000,5000000)(10000000,10000000)(20000000,20000000)};
 
 \legend{time, number of records}
@@ -610,13 +610,14 @@ coordinates {(5000000,5000000)(10000000,10000000)(20000000,20000000)};
 \label{scaleUp}
 \end{figure}
 
-We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger. This is most likely also attributable to the partitioning overhead exceeding the task computation effort for small datasets mentioned before. 
+We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger. This is most likely also attributable to the partitioning overhead cost exceeding the task computation cost for smaller datasets. 
 
 
 \begin{center}
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={250,000 rows},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -626,10 +627,10 @@ We then assess the speed-up of the algorithm. Speed up experiments were conducte
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,158098)(2,129070)(4,130564)(8,97207)(16,95352)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,158098)(2,79049)(4,39525)(8,19762)(16,9881)};
 
 \legend{actual, optimal}
@@ -639,6 +640,7 @@ coordinates {(1,158098)(2,79049)(4,39525)(8,19762)(16,9881)};
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={5 million rows},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -648,10 +650,10 @@ coordinates {(1,158098)(2,79049)(4,39525)(8,19762)(16,9881)};
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,4449781)(2,2546598)(4,1573823)(8,1040411)(16,901938)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
 
 \legend{actual, optimal}
@@ -664,6 +666,7 @@ coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={10 million rows},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -673,10 +676,10 @@ coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,13723016)(2,7174442)(4,3871286)(8,2103755)(16,1486063)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
 
 \legend{actual, optimal}
@@ -686,6 +689,7 @@ coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={20 million rows},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -695,10 +699,10 @@ coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,29329618)(2,15007906)(4,8041695)(8,4323788)(16,2305491)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,29329618)(2,14664809)(4,7332405)(8,3666202)(16,1833101)};
 
 \legend{actual, optimal}
@@ -712,6 +716,7 @@ In comparison with the original paper \cite{Sopaoglu:2017}, we can see that thei
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={Original paper, 500 MB},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -721,10 +726,10 @@ In comparison with the original paper \cite{Sopaoglu:2017}, we can see that thei
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,4250000)(2,2000000)(4,1250000)(8,750000)(16,500000)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,4250000)(2,2125000)(4,1062500)(8,531250)(16,265625)};
 
 \legend{actual, optimal}
@@ -734,6 +739,7 @@ coordinates {(1,4250000)(2,2125000)(4,1062500)(8,531250)(16,265625)};
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={This paper, 5-million rows},
+    xtick = {1,2,4,8,16},
     xlabel={Nodes},
     ylabel={Time (ms)},
     xmin=1, xmax=16,
@@ -743,10 +749,10 @@ coordinates {(1,4250000)(2,2125000)(4,1062500)(8,531250)(16,265625)};
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,4449781)(2,2546598)(4,1573823)(8,1040411)(16,901938)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
 
 \legend{actual, optimal}
@@ -769,10 +775,10 @@ Finally, another test was performed on a 32-core machine and 128 GB RAM for the 
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,13723016)(2,7174442)(4,3871286)(8,2103755)(16,1486063)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
 
 \legend{actual, optimal}
@@ -791,10 +797,10 @@ coordinates {(1,13723016)(2,6861508)(4,3430754)(8,1715377)(16,857689)};
     style=thick
 ]
 
-\addplot[color=orange,mark=round]
+\addplot[color=orange,mark=*]
 coordinates {(1,18779043)(2,10458207)(4,5681087)(8,3670931)(16,3688598)(32,3315245)};
 
-\addplot[color=darkGreen,mark=round]
+\addplot[color=darkGreen,mark=*]
 coordinates {(1,18779043)(2,9389522)(4,4694761)(8,2347380)(16,1173690)(32,586845)};
 
 \legend{actual, optimal}
@@ -810,7 +816,7 @@ Based on experiments conducted in Section~\ref{evaluation}, I can conclude the f
 
 \subsection{Conclusions}
 
-This paper's implementation had speedups close to optimal for larger datasets of 20-million rows. The scale up curve was also close to linear when dataset size doubled, runtime only increased by half. In order to achieve the best performance, Spark partitions need to equal total number of cores in a cluster. Top-Down Specialization on Spark also performed better in a cluster environment compared to local machines even when locally the cores were more powerful than on the cluster. For iterative algorithms, minimizing the number of aggregations and collection from worker nodes to only one yields the best performance results. Even when the aggregations are performed on wide tables of $\approx$100 columns.
+This paper's implementation had speedups close to optimal for larger datasets of 20-million rows. The scale up curve was also virtually flat; when dataset size doubled, runtime only increased by half. In order to achieve the best performance, Spark partitions need to equal total number of cores in a cluster. Top-Down Specialization on Spark also performed better in a cluster environment compared to local machines even when locally the cores were more powerful than on the cluster. For iterative algorithms, minimizing the number of aggregations and collection from worker nodes to only one yields the best performance results. Even when the aggregations are performed on wide tables of $\approx$100 columns.
 
 \subsection{Summary of Contributions}
 
