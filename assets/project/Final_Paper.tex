@@ -610,7 +610,7 @@ coordinates {(5000000,5000000)(10000000,10000000)(20000000,20000000)};
 \label{scaleUp}
 \end{figure}
 
-We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger. This is most likely also attributable to the partitioning overhead cost exceeding the task computation cost for smaller datasets. 
+We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger and the 20-million row dataset provided the closest speedup to optimal. This is most likely also attributable to the partitioning overhead cost exceeding the task computation cost for smaller datasets. 
 
 
 \begin{center}
@@ -824,7 +824,7 @@ This paper enhanced the preprocessing stage by implementing an algorithm that bu
 
 \subsection{Future Research}
 
-The Top-Down Specialization algorithm starts by generalizing all values to the root of taxonomy trees. This introduces redundant iterations for larger datasets as it will iterate all the way from \(k=n\) where $n$ is the number of records to a much lower number such as \(k=100\). Future research can enhance algorithms such as Hybrid Top-Down and Bottom-Up algorithm proposed in \cite{Zhang:2013} by adapting it for Spark. It is also worth researching starting the generalization at a level deeper than the root to avoid these redundant iterations. 
+The Top-Down Specialization algorithm starts by generalizing all values to the root of taxonomy trees. This introduces redundant iterations for larger datasets as it will iterate all the way from \(k=n\), where $n$ is the number of records, to a much lower number such as \(k=100\). Future research can enhance algorithms such as Hybrid Top-Down and Bottom-Up algorithm proposed in \cite{Zhang:2013} by adapting it for Spark so that not all records get generalized to the root before starting specialization. It is also worth researching starting the generalization at a level deeper than the root to avoid these redundant iterations.
 
 % ############################################################################
 % Bibliography
