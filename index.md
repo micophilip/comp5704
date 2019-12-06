@@ -1,4 +1,4 @@
-## Project Title: Parallel Anonymization on Apache Spark™
+## Project Title: Top-Down Specialization on Apache Spark™
 ## Name: Macarious Abadeer
 ## Email: macariousabadeer@cmail.carleton.ca
 School of Computer Science  
