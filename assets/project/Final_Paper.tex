@@ -70,7 +70,7 @@ Ottawa, Canada K1S 5B6\\
 % Abstract
 % ############################################################################
 \begin{abstract}
-The abundance of data available on individuals in all aspects of life as well as regulations protecting people's privacy triggered a need for protecting people's private and personal information in a scalable and efficient way. This personal data includes private information such as health records, banking transactions and frequent locations. This paper provides an implementation of Top-Down Specialization algorithm for data anonymization in parallel using Apache Spark which aims to balance data utility with data privacy. It evaluates the performance on large datasets of up to 20-million rows in a variety of different cluster environments.
+The abundance of data as well as regulations protecting people's privacy created a need for protecting private and personal information in a scalable and efficient way. Personal data includes sensitive and private information such as health records, banking transactions and frequent locations. One of the challenges of data anonymization is when the data anonymity increases its usefulness for analytics or research decreases. This paper provides an implementation of Top-Down Specialization algorithm for data anonymization in parallel using Apache Spark which aims to balance data utility and data privacy. Performance evaluation is done on large datasets of up to 20-million rows in a variety of different cluster environments.
 \end{abstract}
 
 
@@ -84,7 +84,7 @@ In today's abundance of big data ranging from retail and banking transactions, h
 
 While these theories contributed immensely to the practices of data anonymization, $k$-anonymity was proven to be $\mathcal{NP}$-hard by Meyerson and Williams \cite{Meyerson:2004}. Further research used these models as a baseline to develop scalable parallel algorithms that can handle big data.
 
-The paper is organized as follows: in Section~\ref{literature}, I will go over the different ideas that were proposed to optimize and scale $k$-anonymity. Section~\ref{solution} will detail an implemented proposed solution and Section~\ref{evaluation} presents the experimentation results of the algorithm and the paper finally concludes in Section~\ref{conclusion}.
+The paper is organized as follows: in Section~\ref{literature}, I will go over the different ideas that were proposed to optimize and scale $k$-anonymity. Section~\ref{solution} will detail an implementation of Top Down Specialization algorithm in parallel and Section~\ref{evaluation} presents the experimentation results of the algorithm and the paper finally concludes in Section~\ref{conclusion}.
 
 % ############################################################################
 \section{Literature Review} \label{literature}
@@ -227,7 +227,7 @@ Doctorate & F & 44 & $> \text{50k}$ & 1 \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Calculating best score}
+\caption{Sample preprocessed dataset}
 \label{table2}
 \end{table}
 
@@ -257,23 +257,19 @@ $min(\{| R_{\nu c} |\})$ & Anonymity after specialization & 16\\
 
 Plugging these values in Equations~\ref{score} through \ref{privacyLoss} we get:
 
-\[ I (R_{Any\_Edu}) = (- \frac{21}{34} \times \log_2 \frac{21}{34}) + (- \frac{13}{34} \times \log_2 \frac{13}{34}) = 0.9597 \]
-
-\[ I (R_{Without-Post-Secondary\_Edu}) = (- \frac{5}{16} \times \log_2 \frac{5}{16}) + (- \frac{11}{16} \times \log_2 \frac{11}{16}) = 0.8960 \]
-
+\[I (R_{Any\_Edu}) = (- \frac{21}{34} \times \log_2 \frac{21}{34}) + (- \frac{13}{34} \times \log_2 \frac{13}{34}) = 0.9597\]
+\[I (R_{Without-Post-Secondary\_Edu}) = (- \frac{5}{16} \times \log_2 \frac{5}{16}) + (- \frac{11}{16} \times \log_2 \frac{11}{16}) = 0.8960 \]
 \[ I (R_{Post-Secondary\_Edu}) = (- \frac{16}{18} \times \log_2 \frac{16}{18}) + (- \frac{2}{18} \times \log_2 \frac{2}{18}) = 0.5033 \]
-
 \[ InfoGain(Any\_Edu) = 0.9597 - (\frac{16}{34} \times 0.8960 + \frac{18}{34} \times 0.5033) = 0.2716 \]
 
 \[ PrivacyLoss(Any\_Edu) = 34 - 16 = 18 \]
-
 \[ Score(Any\_Edu) = \frac{0.2716}{18} = 0.0151 \]
 
 Once the calculations are done for every tree in $AC$, let's say \emph{Education\_Any} has the highest score, then \emph{Any} is removed from $AC$ set and its subtree rooted at \emph{Without-Post-Secondary} is added along with the subtree rooted at \emph{Post-Secondary} so that the subsequent iteration calculates the scores of these two subtrees along with the rest of the $AC$ set.
 
 \subsection{Pre-Processing}
 
-As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterative algorithm that involves using the same dataset multiple times to perform different calculations. This type of algorithms is best suited for Apache Spark\texttrademark~as shown in Section~\ref{literature}. Spark is a fast and general-purpose cluster computing system that performs its computations in memory by default.
+As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterative algorithm that involves using the same dataset multiple times to perform different calculations. This type of algorithms is best suited for Apache Spark\texttrademark~as shown in Section~\ref{literature}. Spark is a fast and general-purpose cluster computing system that performs its computations in memory by default. In order to prepare our dataset for the main algorithm. First we need to remove all non-$QID$ columns from the dataset. We then perform a group by query for \( \{QID\} \cup \{SA\} \) with the count of every group as shown in the example in Table~\ref{table2}. Since there are multiple iterations that involve generalizing values to the root of the trees in $AC$, we ultimately need to access the cell value's root in \(\mathcal{O}(1)\) time since this will be performed on every cell in the dataset. Therefore, I present an algorithm that runs during the preprocessing stage to build path maps from taxonomy trees.
 
 \begin{algorithm}[h]
 \label{parentChildMap}
@@ -311,10 +307,6 @@ As illustrated by Section~\ref{tdsIntro}, Top-Down Specialization is an iterativ
 
 }
 \end{algorithm}
-
-In order to prepare our dataset for the main algorithm. First we need to remove all non-$QID$ columns from the dataset. We then perform a group by query for \( \{QID\} \cup \{SA\} \) with the count of every group as shown in the example in Table~\ref{table2}.
-
-Since there are multiple iterations that involve generalizing values to the root of the trees in $AC$, we ultimately need to access the cell value's root in \(\mathcal{O}(1)\) time since this will be performed on every cell in the dataset. Therefore, I present an algorithm that runs during the preprocessing stage to build path maps from taxonomy trees.
 
 First, we need to build a parent-child mapping by traversing the taxonomy trees in its entirety in a breadth-first tail-recursive manner as shown in Algorithm~\ref{parentChildMap}. The Top-Down Specialization algorithm implemented for this paper is in Scala since it is the native language of Spark. Tail recursion is a feature in Scala which provides a way to calculate the intermediate results so that the stack does not dramatically increase in size by function calls as it happens in traditional recursive algorithms. The $Traverse$ function traverses through every node in the tree. If a node is not a leaf node, it adds the current node to a queue as many times as its number of children. For example, when we are traversing the node $Any$ in Figure~\ref{taxonomyTree}, we see that it has two children, therefore after Line~\ref{parentQueueUpdate}, $parentQueue$ will contain [$Any$, $Any$]. This way, when we traverse \emph{Without-Post-Secondary} and \emph{Post-Secondary} we dequeue $Any$ twice, and $parentChildMap$ will contain two elements: [\{$key$: \emph{Without-Post-Secondary}, $value$: $Any$\}, \{$key$: \emph{Post-Secondary}, $value$: $Any$\}]
 
@@ -369,51 +361,11 @@ fullPathMap $\leftarrow \emptyset$\;
 
 \end{algorithm}
 
-Finally, we now have the building blocks to build a full path map from a taxonomy tree as shown in Algorithm~\ref{fullPathMap}. We first traverse the whole tree to build the parent-child map, then for every key in the parent-child map, we get the full path. We then update our $fullPathMap$ with the node as the key and the reversed path as the value. The reason we reverse the path is that we need to generalize to the root of the tree. For example, after Algorithm~\ref{fullPathMap} runs, the map for node \emph{9th} in Figure~\ref{taxonomyTree} will look like \{$key$: \emph{9th}, $value$: [\emph{Any, Without-Post-Secondary, Secondary, Junior-Secondary, 9th}]\}. Therefore, getting the root of a node during anonymization is in constant time since the path map is indexed by the node's string value.
+Finally, we now have the necessary blocks to build a full path map from a taxonomy tree as shown in Algorithm~\ref{fullPathMap}. From the parent-child map we get the full path. We then update our $fullPathMap$ with the node as the key and the reversed path as the value. The reason we reverse the path is that we need to generalize to the root of the tree. After Algorithm~\ref{fullPathMap} runs, the map for node \emph{9th} in Figure~\ref{taxonomyTree} will look like \{$key$: \emph{9th}, $value$: [\emph{Any, Without-Post-Secondary, Secondary, Junior-Secondary, 9th}]\}. Therefore, getting the root of a node is in constant time since the path map is indexed by the node's string value.
 
 \subsection{Main Algorithm}
 
-Once the preprocessing is done, we are now ready to proceed with the actual anonymization. We start by partitioning the preprocessed dataset into multiple partitions as shown in Figure~\ref{partitioning}. For every partition, we transform the dataset by creating a column for every operand required in the score calculation equations presented in Equation~\ref{score} through \ref{privacyLoss} in Section~\ref{tdsIntro}. For example, we transform Table~\ref{table2} to Table~\ref{table3} shown below. The columns with \_Y and \_N prefixes represent those with \(SA > 50k\) and \(SA \leq 50k\) respectively. The \_WPS prefix represents count of values that get generalized to Without-Post-Secondary node and \_PS for Post-Secondary. This transformation is done for all $QID$ on all worker nodes in parallel however due to the large width of the resulting dataset I show the example for \emph{Education} attribute only.
-
-\begin{algorithm}[h]
-\label{tdsImplemented}
-\caption{Parallel Anonymization}
-\SetKwFunction{FAnonymize}{Anonymize}
-\SetKwFunction{FTransform}{Transform}
-\SetKwFunction{FFindBestScore}{FindBestScore}
-\SetKwFunction{FGetChildren}{GetChildren}
-\SetKwFunction{FDequeue}{Dequeue}
-\SetKwFunction{FGeneralize}{Generalize}
-\SetKwFunction{FCalculateK}{CalculateK}
-\SetKwProg{Fn}{Function}{:}{}
-\KwIn{originalPathMap, newPathMap, AC, partitionedDataset, k}
-\KwOut{anonymizedCuts}
-
-\Fn{ \FAnonymize{$originalPathMap$, $newPathMap$, $AC$, $k$} } {
-  transformedPartitionedDataset $\leftarrow$ \FTransform{QIDs, partitionedDataset}\;
-  bestScoreAC $\leftarrow \FFindBestScore{transformedPartitionedDataset}$\;
-  bestScoreChildren $\leftarrow \FGetChildren{bestScoreAC}$\;
-  newAC $\leftarrow AC - bestScoreAC + bestScoreChildren$\;
-  originalMap $\leftarrow originalPathMap$\;
-  newMap $\leftarrow \FDequeue{bestScoreAC}$\;
-  generalizedDataset $\leftarrow \FGeneralize{partitionedDataset, newPathMap}$\;
-  kCurrent $\leftarrow \FCalculateK{generalizedDataset}$\;
-  \uIf{$kCurrent > k$} {
-    \tcc{too general, repeat}
-    \KwRet \FAnonymize{originalMap, newMap, newAC}
-  }
-  \uElseIf {$kCurrent < k$} {
-    \tcc{violated k, return map before generalization}
-    \KwRet originalPathMap\; \nllabel{originalPathMap}
-  }
-  \Else{
-    \KwRet newMap\; \nllabel{newMap}
-  }
-}
-
-\end{algorithm}
-
-\begin{figure}[htp]
+\begin{figure}[h]
 \centering
 \tikzset{every picture/.style={line width=0.75pt}}
 \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
@@ -484,7 +436,9 @@ Once the preprocessing is done, we are now ready to proceed with the actual anon
 \label{partitioning}
 \end{figure}
 
-\begin{table}[htp]
+Once the preprocessing is done, we are now ready to proceed with the actual anonymization. We start by partitioning the preprocessed dataset into multiple partitions as shown in Figure~\ref{partitioning}. For every partition, we transform the dataset by creating a column for every operand required in the score calculation equations. For example, we transform Table~\ref{table2} to Table~\ref{table3} shown below. The columns with \_Y and \_N prefixes represent those with \(SA > 50k\) and \(SA \leq 50k\) respectively. The \_WPS prefix represents count of values that get generalized to Without-Post-Secondary node and \_PS for Post-Secondary. This transformation is done for all $QID$ on all worker nodes in parallel however due to the large width of the resulting dataset I show the example for \emph{Education} attribute only.
+
+\begin{table}[h]
 \begin{adjustbox}{width=\textwidth, center}
 \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
 \hline
@@ -506,7 +460,47 @@ Doctorate & Any & PS & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0\\
 \label{table3}
 \end{table}
 
-Once we have all the transformations, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs these aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then gets stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring $AC$ (Anonymization Cut) tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added. The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented} above.
+\begin{algorithm}[htp]
+\label{tdsImplemented}
+\caption{Parallel Anonymization}
+\SetKwFunction{FAnonymize}{Anonymize}
+\SetKwFunction{FTransform}{Transform}
+\SetKwFunction{FFindBestScore}{FindBestScore}
+\SetKwFunction{FGetChildren}{GetChildren}
+\SetKwFunction{FDequeue}{Dequeue}
+\SetKwFunction{FGeneralize}{Generalize}
+\SetKwFunction{FCalculateK}{CalculateK}
+\SetKwProg{Fn}{Function}{:}{}
+\KwIn{originalPathMap, newPathMap, AC, partitionedDataset, k}
+\KwOut{anonymizedCuts}
+
+\Fn{ \FAnonymize{$originalPathMap$, $newPathMap$, $AC$, $k$} } {
+  transformedPartitionedDataset $\leftarrow$ \FTransform{QIDs, partitionedDataset}\;
+  bestScoreAC $\leftarrow \FFindBestScore{transformedPartitionedDataset}$\;
+  bestScoreChildren $\leftarrow \FGetChildren{bestScoreAC}$\;
+  newAC $\leftarrow AC - bestScoreAC + bestScoreChildren$\;
+  originalMap $\leftarrow originalPathMap$\;
+  newMap $\leftarrow \FDequeue{bestScoreAC}$\;
+  generalizedDataset $\leftarrow \FGeneralize{partitionedDataset, newPathMap}$\;
+  kCurrent $\leftarrow \FCalculateK{generalizedDataset}$\;
+  \uIf{$kCurrent > k$} {
+    \tcc{too general, repeat}
+    \KwRet \FAnonymize{originalMap, newMap, newAC}
+  }
+  \uElseIf {$kCurrent < k$} {
+    \tcc{violated k, return map before generalization}
+    \KwRet originalPathMap\; \nllabel{originalPathMap}
+  }
+  \Else{
+    \KwRet newMap\; \nllabel{newMap}
+  }
+}
+
+\end{algorithm}
+
+Once we have all the transformations, we can then perform the aggregations that will provide us with the total numbers to be used in the score calculation equations. The aggregation dataset is just one row with all the aggregates as shown in Table~\ref{table4}. The values for the aggregates correspond to the same values in the example provided in Section~\ref{tdsIntro}. Spark performs these aggregations in parallel for every partition. The aggregation is followed by a $collect$ call which triggers Spark to collect all the aggregates from the worker nodes into the master node which then gets stored in a local variable representing Table~\ref{table4}. The scores are then calculated using the local variable. The highest scoring $AC$ (Anonymization Cut) tree is selected, its root is removed from the $AC$ set, and its children's subtrees are added.
+
+The dataset is then generalized to the root of all respective $AC$ trees, $k$ is calculated, and the iteration continues until $k$ is violated. The main algorithm can be summarized in Algorithm~\ref{tdsImplemented} above.
 
 \begin{table}[htp]
 \begin{adjustbox}{width=\textwidth, center}
@@ -522,24 +516,18 @@ Edu\_Any & Edu\_Any\_Y & Edu\_Any\_N & Edu\_WPS & Edu\_PS & Edu\_WPS\_Y & Edu\_W
 \label{table4}
 \end{table}
 
-The path map that gets returned from Algorithm~\ref{tdsImplemented} Line~\ref{originalPathMap} or \ref{newMap} once it is done can be as follows:
-
+The path map that gets returned from Line~\ref{originalPathMap} or \ref{newMap} in Algorithm~\ref{tdsImplemented} once it is done can look as follow:
 \begin{verbatim}
-education:
-    Map(
+education: Map(
         7th-8th: Queue(Elementary, 7th-8th),
-        Bachelors: Queue(University, Bachelors),
-        ...
+        Bachelors: Queue(University, Bachelors), ...
     ),
-native-country:
-    Map(
-        Vietnam: Queue(Asia, Southeastern-Asia, Vietnam),
-        ...
+native-country: Map(
+        Vietnam: Queue(Asia, Southeastern-Asia, Vietnam), ...
     ),
 ...
 \end{verbatim}
-
-This anonymization map can then be passed to a Spark User Defined Function (UDF) that gets executed on every cell. For education column it will generalize \emph{7th-8th} values to \emph{Elementary} and \emph{Bachelors} to \emph{University}. For native country column, \emph{Vietnam} values will be generalized to \emph{Asia}
+This anonymization map can then be passed to a Spark User Defined Function (UDF) that gets executed on every cell. For education column it will generalize \emph{7th-8th} values to \emph{Elementary} and \emph{Bachelors} to \emph{University}. For native country column, \emph{Vietnam} values will be generalized to \emph{Asia}.
 
 \subsection{Performance enhancements}
 
@@ -553,13 +541,17 @@ Lastly, the biggest improvement enhancement was achieved by performing the aggre
 \section{Experimental Evaluation} \label{evaluation}
 % ############################################################################
 
-Experiments were performed on an OpenStack cluster with 1, 2, 4, 8 and 16 worker nodes. Each node had 4 vCPUs, 8 GB RAM and 32 GB disk size. All nodes were running Spark version 2.4.2, Scala 12.10 and Java 8. The dataset used is the same \emph{Adult} dataset referenced in \cite{Sopaoglu:2017} however it was enlarged to 4 different datasets of 250,000, 5 million, 10 million and 20 million-row datasets. The enlargement process involved writing a program to inject rows using a random value from the list of distinct values in the original dataset for every column.
+Experiments were performed on an OpenStack cluster with 1, 2, 4, 8 and 16 worker nodes. Each node had 4 vCPUs, 8 GB RAM and 32 GB disk size. All nodes were running Spark version 2.4.2, Scala 12.10 and Java 8.
 
-A total of 8 $QID$ values were specified. All were categorical attributes: $education$, $marital\_status$, $occupation$, $native\_country$, $workclass$, $relationship$, $race$, $sex$. The $k$ value was set to 100.
+The dataset used is the same \emph{Adult} dataset referenced in \cite{Sopaoglu:2017} however it was enlarged to 4 different datasets of 250,000, 5 million, 10 million and 20 million-row datasets. The enlargement process involved writing a program to inject rows using a random value from the list of distinct values in the original dataset for every column.
 
-The first experiment was determining the number of partitions. Using a 5 million dataset and running on an 8-node cluster, the following variations were tested for number of partitions: 16, 32 (total number of vCPUs in the cluster), 50, 100, 200 (Spark's default number of partitions), 300, 400 and 528. As shown in Figure~\ref{bestPartition}, the best performance was when number of partitions set to the number of total vCPUs in the cluster which performed 1.5 times faster than the Spark default. The dashed vertical line represents the best performing and the dotted represents Spark's default. The most likely explanation is that when partitions are fewer than number of CPUs, not all cores are utilized. While when the number of partitions is much higher than number of cores, the partitioned dataset becomes too small to the point that the overhead of partitioning exceeds the time it takes to execute the task itself.
+A total of 8 categorical $QID$s were specified: $education$, $marital\_status$, $occupation$, $native\_country$, $workclass$, $relationship$, $race$ and $sex$. The $k$ value was set to 100.
 
-\begin{figure}[htp]
+The first experiment was determining the number of partitions. Using a 5 million-row dataset and running on an 8-node cluster, the following variations were tested for number of partitions: 16, 32 (total number of vCPUs in the cluster), 50, 100, 200 (Spark's default number of partitions), 300, 400 and 528.
+
+As shown in Figure~\ref{bestPartition}, the best performance was achieved when the number of partitions was set to the total number of vCPUs in the cluster. The dashed vertical line represents the best performing and the dotted represents Spark's default. The most likely explanation for this result is that when partitions are fewer than number of CPUs, not all cores are utilized. While when the number of partitions is much higher than number of cores, the partitioned dataset becomes too small to the point that the overhead of partitioning and scheduling the tasks exceed the time it takes to execute the task itself.
+
+\begin{figure}[h]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
@@ -585,7 +577,9 @@ coordinates {(16,1258976)(32,1040411)(50,1315358)(100,1384842)(200,1521808)(300,
 \label{bestPartition}
 \end{figure}
 
-The following experiment evaluated the scale-up of Top-Down Specialization on Spark shown in Figure~\ref{scaleUp}. Running 4 different datasets on a 16-node cluster and 64 partitions, we can see that when the dataset size increases by 100\% from 5 to 10 to 20 million, the runtime only increases by 55-65\%
+The following experiment evaluated the scale-up of Top-Down Specialization on Spark. The algorithm was executed using 3 dataset sizes on a 16-node cluster and 64 partitions.
+
+When the dataset size increased by 100\% from 5 to 10 to 20 million rows, the runtime only increased by 55-65\%. This result is shown in Figure~\ref{scaleUp}.
 
 \begin{figure}[h]
 \centering
@@ -610,10 +604,10 @@ coordinates {(5000000,5000000)(10000000,10000000)(20000000,20000000)};
 \label{scaleUp}
 \end{figure}
 
-We then assess the speed-up of the algorithm. Speed up experiments were conducted for datasets of 250,000 rows as well as 5, 10 and 20-million rows. As shown, the speedup significantly improved as the size of the dataset became larger and the 20-million row dataset provided the closest speedup to optimal. This is most likely also attributable to the partitioning overhead cost exceeding the task computation cost for smaller datasets. 
+The next experiment assessed the speedup of the algorithm. Speed up experiments were conducted using four different dataset sizes: 250 thousand rows as well as 5, 10 and 20-million rows. As shown in Figure~\ref{speedUps}, the speedup significantly improved as the size of the dataset became larger. The 20-million row dataset provided the closest speedup to optimal. However, for the 250-thousand row dataset, increasing the number of nodes beyond 8 did not make a difference since the  dataset was too small to be partitioned further. This is also most likely attributable to the assumption mentioned before where the overhead from partitioning the dataset and scheduling the task exceeded the computation cost of the task itself.
 
-
-\begin{center}
+\begin{figure}[hp]
+\centering
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={250,000 rows},
@@ -659,10 +653,9 @@ coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
 \legend{actual, optimal}
 \end{axis}
 \end{tikzpicture}
-\end{center}
 
+\vspace{0.5cm}
 
-\begin{center}
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={10 million rows},
@@ -708,11 +701,12 @@ coordinates {(1,29329618)(2,14664809)(4,7332405)(8,3666202)(16,1833101)};
 \legend{actual, optimal}
 \end{axis}
 \end{tikzpicture}
-\end{center}
+\caption{Speed-up curves for TDS}
+\label{speedUps}
+\end{figure}
 
-In comparison with the original paper \cite{Sopaoglu:2017}, we can see that their speedup was slightly better for 5-million row dataset. Please note that \cite{Sopaoglu:2017} used size on disk for measurement which was equivalent to this paper's 5-million row dataset. Please also note that the test environment used in the original paper was slightly different as the authors installed Spark on Docker contains on the same 32-core machine. It is presumed that the communication between Docker images on the same machine will not have the communication overhead between workers in a cluster where this paper's implementation was tested.
-
-\begin{center}
+\begin{figure}[hp]
+\centering
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={Original paper, 500 MB},
@@ -758,11 +752,16 @@ coordinates {(1,4449781)(2,2224891)(4,1112445)(8,556223)(16,278111)};
 \legend{actual, optimal}
 \end{axis}
 \end{tikzpicture}
-\end{center}
+\caption{Comparison with original paper}
+\label{originalPaperCompare}
+\end{figure}
 
-Finally, another test was performed on a 32-core machine and 128 GB RAM for the 10-million row dataset. As shown, the 10-million row running on a cluster had a much better speedup compared to the same dataset running in a 32-core machine. The most likely reason for this is as the dataset increases, the bus communication traffic becomes congested which serves as a bottleneck not present in a cluster environment. Spark documentation also shows that running locally on the same machine is meant for testing only and some out-of-the-box Spark performance enhancements are only available for cluster environments.
+In comparison with the original paper \cite{Sopaoglu:2017}, we can see in Figure~\ref{originalPaperCompare} that their speedup was slightly better for 5-million row dataset. Note that \cite{Sopaoglu:2017} used size on disk for measurement which was equivalent to this paper's 5-million row dataset. Also note that the test environment used in the original paper was slightly different as the authors installed Spark on Docker containers on the same machine. It is presumed that the communication between Docker images on the same machine will not suffer from the communication overhead between workers in a cluster where this paper's implementation was evaluated.
 
-\begin{center}
+Finally, a test was performed on a 32-core machine and 128 GB RAM for the 10-million row dataset. As shown in Figure~\ref{superCluster}, the 10-million row running on a cluster had a much better speedup compared to the same dataset running on a 32-core machine. The most likely reason for this is as the dataset becomes larger, and the number of cores increases, the bus communication traffic becomes congested which serves as a bottleneck not present in a cluster environment. Spark documentation also shows that running locally on the same machine is meant for testing purposes only and some out-of-the-box Spark performance enhancements are only available for cluster environments.
+
+\begin{figure}[h]
+\centering
 \begin{tikzpicture}[scale=0.8]
 \begin{axis}[
     title={10 million rows on a cluster},
@@ -806,15 +805,13 @@ coordinates {(1,18779043)(2,9389522)(4,4694761)(8,2347380)(16,1173690)(32,586845
 \legend{actual, optimal}
 \end{axis}
 \end{tikzpicture}
-\end{center}
+\caption{Comparison with 32-core local}
+\label{superCluster}
+\end{figure}
 
 % ############################################################################
 \section{Conclusions} \label{conclusion}
 % ############################################################################
-
-Based on experiments conducted in Section~\ref{evaluation}, I can conclude the following:
-
-\subsection{Conclusions}
 
 This paper's implementation had speedups close to optimal for larger datasets of 20-million rows. The scale up curve was also virtually flat; when dataset size doubled, runtime only increased by half. In order to achieve the best performance, Spark partitions need to equal total number of cores in a cluster. Top-Down Specialization on Spark also performed better in a cluster environment compared to local machines even when locally the cores were more powerful than on the cluster. For iterative algorithms, minimizing the number of aggregations and collection from worker nodes to only one yields the best performance results. Even when the aggregations are performed on wide tables of $\approx$100 columns.
 
@@ -824,7 +821,7 @@ This paper enhanced the preprocessing stage by implementing an algorithm that bu
 
 \subsection{Future Research}
 
-The Top-Down Specialization algorithm starts by generalizing all values to the root of taxonomy trees. This introduces redundant iterations for larger datasets as it will iterate all the way from \(k=n\), where $n$ is the number of records, to a much lower number such as \(k=100\). Future research can enhance algorithms such as Hybrid Top-Down and Bottom-Up algorithm proposed in \cite{Zhang:2013} by adapting it for Spark so that not all records get generalized to the root before starting specialization. It is also worth researching starting the generalization at a level deeper than the root to avoid these redundant iterations.
+The Top-Down Specialization algorithm starts by generalizing all values to the root of taxonomy trees. This introduces redundant iterations for larger datasets as it will iterate all the way from \(k=n\), where $n$ is the number of records, to a much lower number such as \(k=100\). Future research can enhance algorithms such as Hybrid Top-Down and Bottom-Up algorithm proposed in \cite{Zhang:2013} by adapting it for Spark so that not all records get generalized to the root before starting specialization. It is also worth it to research starting the generalization at a level deeper than the root to avoid these redundant iterations.
 
 % ############################################################################
 % Bibliography

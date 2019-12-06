@@ -18,8 +18,8 @@ Top-Down Specialization is one of the methods recommended for anonymizing datase
 * [Literature Review](/assets/project/Literature_Review.pdf)  
 * [Presentation Outline](/assets/project/Presentation_Outline.pdf)  
 * Slide Presentation ([\*.pdf](/assets/project/Presentation.pdf) \| [\*.pptx](/assets/project/Presentation.pptx))  
-* Final Paper  
-* Code and Data  
+* [Final Paper](/assets/project/Final_Paper.pdf)  
+* [Code and Data](https://github.com/micophilip/tds-spark) ([\*.zip](https://github.com/micophilip/tds-spark/archive/master.zip))  
 
 ### Relevant References
 1. [Clash of the titans: MapReduce vs. Spark for large scale data analytics](https://dl-acm-org.proxy.library.carleton.ca/citation.cfm?doid=2831360.2831365)
