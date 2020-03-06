@@ -12,7 +12,7 @@ Balancing data utility and data privacy is a challenging problem and this resear
 Top-Down Specialization is one of the methods recommended for anonymizing datasets with large _k_ value requirements. The larger the _k_ the more anonymous the dataset is.
 
 ### Startup Paper(s)
-1. [A top-down k-anonymization implementation for Apache Spark](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
+1. [U. Sopaoglu and O. Abul. A top-down k-anonymization implementation for apache spark. In 2017 IEEE International Conference on Big Data (Big Data), pages 4513– 4521, December 2017.](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
 
 ### Deliverables
 * [Literature Review](/assets/project/Literature_Review.pdf)  
