@@ -1,6 +1,5 @@
 ## Project Title: Top-Down Specialization on Apache Spark™
 ## Name: Macarious Abadeer
-## Email: macariousabadeer [at] scs.carleton.ca
 School of Computer Science  
 Carleton University, Ottawa, Canada
 
@@ -15,8 +14,6 @@ Top-Down Specialization is one of the methods recommended for anonymizing datase
 1. [U. Sopaoglu and O. Abul. A top-down k-anonymization implementation for apache spark. In 2017 IEEE International Conference on Big Data (Big Data), pages 4513– 4521, December 2017.](https://ieeexplore-ieee-org.proxy.library.carleton.ca/stamp/stamp.jsp?tp=&arnumber=8258492)
 
 ### Deliverables
-* [Literature Review](/assets/project/Literature_Review.pdf)  
-* [Presentation Outline](/assets/project/Presentation_Outline.pdf)  
 * Slide Presentation ([\*.pdf](/assets/project/Presentation.pdf) \| [\*.pptx](/assets/project/Presentation.pptx))  
 * [Final Paper](/assets/project/Final_Paper.pdf)  
 * [Code and Data](https://github.com/micophilip/tds-spark) ([\*.zip](https://github.com/micophilip/tds-spark/archive/master.zip))  
