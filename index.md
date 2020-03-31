@@ -1,6 +1,6 @@
 ## Project Title: Top-Down Specialization on Apache Spark™
 ## Name: Macarious Abadeer
-## Email: macariousabadeer@cmail.carleton.ca
+## Email: macariousabadeer [at] scs.carleton.ca
 School of Computer Science  
 Carleton University, Ottawa, Canada
 
